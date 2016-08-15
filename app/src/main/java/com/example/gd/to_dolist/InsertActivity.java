@@ -29,6 +29,7 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import java.sql.Time;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -49,8 +50,10 @@ public class InsertActivity extends AppCompatActivity {
 
         Toolbar mToolbar = (Toolbar) findViewById(R.id.toolbar_add);
         setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setHomeAsUpIndicator(R.drawable.abc_ic_clear_mtrl_alpha);
+        if(getSupportActionBar()!=null){
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setHomeAsUpIndicator(R.drawable.abc_ic_clear_mtrl_alpha);
+        }
 
         desc = ""; date = ""; time = "";
 
@@ -124,12 +127,9 @@ public class InsertActivity extends AppCompatActivity {
                 public void onDateSet(DatePicker view, int year, int month, int day){
                     TextView text_date = (TextView) getActivity().findViewById(R.id.text_date);
 
-                    if(year == c.get(Calendar.YEAR)
-                            && month == c.get(Calendar.MONTH)
-                            && day == c.get(Calendar.DAY_OF_MONTH))
-                        today = true;
-                    else
-                        today = false;
+                    today = (year == c.get(Calendar.YEAR))
+                            && (month == c.get(Calendar.MONTH))
+                            && (day == c.get(Calendar.DAY_OF_MONTH));
 
                     if (today && pastTime && !time.equals("")){
                         showAlertDialog(getActivity(), R.string.dialog_message);
@@ -163,18 +163,30 @@ public class InsertActivity extends AppCompatActivity {
 
                             TextView text_time = (TextView) getActivity().findViewById(R.id.text_time);
 
-                            if (hour < c.get(Calendar.HOUR_OF_DAY)
+                            pastTime = hour < c.get(Calendar.HOUR_OF_DAY)
                                     || (hour <= c.get(Calendar.HOUR_OF_DAY)
-                                    && minute <= c.get(Calendar.MINUTE)))
-                                pastTime = true;
-                            else
-                                pastTime = false;
+                                    && minute <= c.get(Calendar.MINUTE));
 
                             if (today && pastTime && !date.equals("")) {
                                 showAlertDialog(getActivity(), R.string.dialog_message);
                                 text_time.setText("");
                             } else {
-                                time = String.format("%02d", hour) + ":" + String.format("%02d", minute);
+                                String am_pm;
+
+                                if (hour >= 12){
+                                    am_pm = "pm";
+                                    hour -= 12;
+                                }
+                                else if (hour == 0){
+                                    am_pm = "am";
+                                    hour += 12;
+                                }
+                                else{
+                                    am_pm = "am";
+                                }
+
+                                time = hour + ":" + String.format("%02d", minute) + am_pm;
+
                                 text_time.setText(time);
                             }
                         }
