@@ -21,11 +21,11 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static ArrayList<Task> tasks;
     private static TaskDbHelper mDbHelper;
 
     @Override
@@ -43,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
 
         mDbHelper = new TaskDbHelper(this);
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
+
+        ArrayList<Task> tasks = new ArrayList<>();
 
         String[] projection = {
                 TaskContract.TaskEntry._ID,
@@ -73,31 +75,38 @@ public class MainActivity extends AppCompatActivity {
                 String time = cursor.getString(cursor.getColumnIndexOrThrow
                         (TaskContract.TaskEntry.COLUMN_NAME_TIME));
 
+                SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
+                SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm a");
+                date = dateFormatter.format(Long.parseLong(date));
+                time = timeFormatter.format(Long.parseLong(time));
+
                 Task task = new Task(desc, date, time);
-                tasks = new ArrayList<Task>();
                 tasks.add(task);
 
-            } while(cursor.moveToNext());
+                Log.d("How many task", Long.toString(id));
+                Log.d("the desc", task.getDesc());
+                Log.d("the date", task.getDate());
+                Log.d("the time", task.getTime());
 
-            for(Task ttask: tasks){
-                //long id = cursor.getLong(cursor.getColumnIndexOrThrow(TaskContract.TaskEntry._ID));
-                //Log.d("How many task", Long.toString(id));
-                Log.d("the desc", ttask.getDesc());
-                Log.d("the date", ttask.getDate());
-                Log.d("the time", ttask.getTime());
-            }
+            } while(cursor.moveToNext());
         }
 
         TaskAdapter adapter = new TaskAdapter(this, 0, tasks);
-        ListView listView = (ListView)findViewById(R.id.list_view);
-        listView.setAdapter(adapter);
+        final ListView listView = (ListView)findViewById(R.id.list_view);
+        if(adapter.getCount() != 0){
+            adapter.notifyDataSetChanged();
+            listView.setAdapter(adapter);
 
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                showInsertActivity();
-            }
-        });
+            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> adapterView, View view, int pos, long id) {
+                    Object obj = listView.getItemAtPosition(pos);
+                    showInsertActivity();
+                }
+            });
+        }
+
+
 
     }
 
@@ -112,6 +121,8 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.action_add_task:{
                 showInsertActivity();
+            }
+            case R.id.action_settings:{
             }
             default:
                 return super.onOptionsItemSelected(item);

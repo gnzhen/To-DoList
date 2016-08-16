@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.DialogFragment;
@@ -70,11 +71,6 @@ public class InsertActivity extends AppCompatActivity {
                         showAlertDialog(InsertActivity.this, R.string.dialog_message1);
                     }
                     else {
-                        TextView text_date = (TextView) findViewById(R.id.text_date);
-                        TextView text_time = (TextView) findViewById(R.id.text_time);
-                        date = text_date.getText().toString();
-                        time = text_time.getText().toString();
-
                         mDbHelper = new TaskDbHelper(getApplicationContext());
                         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
@@ -112,6 +108,7 @@ public class InsertActivity extends AppCompatActivity {
 
     public static class DatePickerFragment extends DialogFragment {
 
+        @NonNull
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState){
             final Calendar c = Calendar.getInstance();
@@ -136,8 +133,13 @@ public class InsertActivity extends AppCompatActivity {
                         text_date.setText("");
                     }
                     else{
-                        date = day + "/" + (month+1) + "/" + year;
-                        text_date.setText(date);
+                        final Calendar c = Calendar.getInstance();
+                        c.set(year, month, day);
+
+                        date = Long.toString(c.getTimeInMillis());
+
+                        SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
+                        text_date.setText(dateFormatter.format(Long.parseLong(date)));
                     }
 
                 }
@@ -150,6 +152,7 @@ public class InsertActivity extends AppCompatActivity {
     }
 
     public static class TimePickerFragment extends DialogFragment {
+        @NonNull
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             final Calendar c = Calendar.getInstance();
@@ -171,23 +174,15 @@ public class InsertActivity extends AppCompatActivity {
                                 showAlertDialog(getActivity(), R.string.dialog_message);
                                 text_time.setText("");
                             } else {
-                                String am_pm;
+                                final Calendar c = Calendar.getInstance();
+                                c.set(hour, minute);
 
-                                if (hour >= 12){
-                                    am_pm = "pm";
-                                    hour -= 12;
-                                }
-                                else if (hour == 0){
-                                    am_pm = "am";
-                                    hour += 12;
-                                }
-                                else{
-                                    am_pm = "am";
-                                }
+                                time = Long.toString(c.getTimeInMillis());
 
-                                time = hour + ":" + String.format("%02d", minute) + am_pm;
+                                SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm a");
+                                text_time.setText(timeFormatter.format(Long.parseLong(time)));
 
-                                text_time.setText(time);
+                                Log.d("the date in milis", time);
                             }
                         }
                     }, hour, minute, DateFormat.is24HourFormat(getActivity()));

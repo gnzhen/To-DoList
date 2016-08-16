@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">To-DoList</string>
     <string name="action_settings">Settings</string>
-    <string name="title_activity_insert">Add A Task</string>
+    <string name="title_activity_insert"></string>
     <string name="text_task">What is your task?</string>
     <string name="edit_task">Insert task</string>
     <string name="btn_ok">OK</string>
