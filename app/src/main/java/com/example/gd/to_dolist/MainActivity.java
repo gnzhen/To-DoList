@@ -83,11 +83,6 @@ public class MainActivity extends AppCompatActivity {
                 Task task = new Task(desc, date, time);
                 tasks.add(task);
 
-                Log.d("How many task", Long.toString(id));
-                Log.d("the desc", task.getDesc());
-                Log.d("the date", task.getDate());
-                Log.d("the time", task.getTime());
-
             } while(cursor.moveToNext());
         }
 
