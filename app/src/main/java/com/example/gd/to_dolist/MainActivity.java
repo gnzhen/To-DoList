@@ -9,6 +9,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
@@ -17,6 +18,8 @@ import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,6 +30,9 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity {
 
     private static TaskDbHelper mDbHelper;
+    ArrayList<Task> tasks;
+    Boolean edit = false;
+    String desc, date, time;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,13 +44,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onResume(){
+    public void onResume() {
         super.onResume();
 
         mDbHelper = new TaskDbHelper(this);
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
-        ArrayList<Task> tasks = new ArrayList<>();
+        tasks = new ArrayList<>();
+        edit = false;
 
         String[] projection = {
                 TaskContract.TaskEntry._ID,
@@ -53,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
                 TaskContract.TaskEntry.COLUMN_NAME_TIME
         };
 
-        String sortOrder = TaskContract.TaskEntry.COLUMN_NAME_DESC + " DESC"; //ascending
+        String sortOrder = TaskContract.TaskEntry._ID + " DESC"; //ascending
 
         Cursor cursor = db.query(
                 TaskContract.TaskEntry.TABLE_NAME,
@@ -65,14 +72,15 @@ public class MainActivity extends AppCompatActivity {
                 sortOrder
         );
 
-        if(cursor.moveToFirst()){
-            do{
-                long id = cursor.getLong(cursor.getColumnIndexOrThrow(TaskContract.TaskEntry._ID));
-                String desc = cursor.getString(cursor.getColumnIndexOrThrow
+        if (cursor.moveToFirst()) {
+            do {
+                long id = cursor.getLong(cursor.getColumnIndexOrThrow
+                        (TaskContract.TaskEntry._ID));
+                desc = cursor.getString(cursor.getColumnIndexOrThrow
                         (TaskContract.TaskEntry.COLUMN_NAME_DESC));
-                String date = cursor.getString(cursor.getColumnIndexOrThrow
+                date = cursor.getString(cursor.getColumnIndexOrThrow
                         (TaskContract.TaskEntry.COLUMN_NAME_DATE));
-                String time = cursor.getString(cursor.getColumnIndexOrThrow
+                time = cursor.getString(cursor.getColumnIndexOrThrow
                         (TaskContract.TaskEntry.COLUMN_NAME_TIME));
 
                 SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
@@ -80,27 +88,44 @@ public class MainActivity extends AppCompatActivity {
                 date = dateFormatter.format(Long.parseLong(date));
                 time = timeFormatter.format(Long.parseLong(time));
 
-                Task task = new Task(desc, date, time);
+                Task task = new Task(id, desc, date, time, false);
                 tasks.add(task);
 
-            } while(cursor.moveToNext());
+            } while (cursor.moveToNext());
         }
 
-        TaskAdapter adapter = new TaskAdapter(this, 0, tasks);
-        final ListView listView = (ListView)findViewById(R.id.list_view);
-        if(adapter.getCount() != 0){
-            adapter.notifyDataSetChanged();
-            listView.setAdapter(adapter);
+        final TaskAdapter adapter = new TaskAdapter(this, 0, tasks);
+        final ListView listView = (ListView) findViewById(R.id.list_view);
+        if (adapter.getCount() != 0) {
+            listView.post(new Runnable() {
+                @Override
+                public void run() {
+                    listView.setAdapter(adapter);
+                    listView.smoothScrollToPosition(0);
+                }
+            });
 
             listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> adapterView, View view, int pos, long id) {
-                    Object obj = listView.getItemAtPosition(pos);
-                    showInsertActivity();
+                    long itemId = listView.getItemIdAtPosition(pos);
+
+                    Task task = adapter.getItem(pos);
+                    edit = true;
+
+                    Intent intent = new Intent(getApplicationContext(), InsertActivity.class);
+                    Bundle args = new Bundle();
+                    args.putSerializable("TASK", task);
+                    args.putSerializable("EDIT", edit);
+                    intent.putExtras(args);
+                    startActivity(intent);
+
+                    Log.d("the item id is", Long.toString(itemId));
+                    Log.d("the task id is", Long.toString(task.getId()));
+                    Log.d("the task desc is", task.getDesc());
                 }
             });
         }
-
 
 
     }
@@ -114,18 +139,18 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_add_task:{
-                showInsertActivity();
+            case R.id.action_add_task: {
+                Intent intent = new Intent(this, InsertActivity.class);
+                Bundle args = new Bundle();
+                args.putSerializable("EDIT", edit);
+                intent.putExtras(args);
+                startActivity(intent);
             }
-            case R.id.action_settings:{
+            case R.id.action_settings: {
             }
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
-
-    public void showInsertActivity(){
-        Intent intent = new Intent(this, InsertActivity.class);
-        startActivity(intent);
-    }
 }
+

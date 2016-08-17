@@ -36,8 +36,15 @@ public class TaskAdapter extends ArrayAdapter {
         return tasks.size();
     }
 
-    public Task getItem(Task position) {
-        return position;
+    public Task getItem(int position) {
+
+        Task itemTask = new Task();
+
+        for(Task task: tasks){
+            if (Long.toString(task.getId()).equals(Integer.toString(getCount() - position)))
+                itemTask = task;
+        }
+        return itemTask;
     }
 
     public long getItemId(int position) {
@@ -69,6 +76,7 @@ public class TaskAdapter extends ArrayAdapter {
                 holder = (ViewHolder) view.getTag();
             }
 
+            holder.taskDesc.setText(tasks.get(position).getDesc());
             holder.taskDesc.setText(tasks.get(position).getDesc());
             holder.taskDate.setText(tasks.get(position).getDate());
             holder.taskTime.setText(tasks.get(position).getTime());

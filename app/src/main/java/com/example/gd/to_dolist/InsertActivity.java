@@ -41,8 +41,10 @@ public class InsertActivity extends AppCompatActivity {
     public static boolean today = false, pastTime = false;
     public static TaskDbHelper mDbHelper;
     public static String desc, date, time;
-
-    Intent intent = getIntent();
+    public static Boolean edit;
+    public static TextView text_time;
+    public static TextView text_date;
+    public static EditText edit_desc;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,13 +60,29 @@ public class InsertActivity extends AppCompatActivity {
 
         desc = ""; date = ""; time = "";
 
+        Intent intent = getIntent();
+        Bundle args = intent.getExtras();
+        edit = (Boolean)args.getSerializable("EDIT");
+
+        if(edit){
+            Task task = (Task)args.getSerializable("TASK");
+
+            edit_desc = (EditText) findViewById(R.id.edit_desc);
+            text_date = (TextView) findViewById(R.id.text_date);
+            text_time = (TextView) findViewById(R.id.text_time);
+
+            edit_desc.setText(task.getDesc());
+            text_date.setText(task.getDate());
+            text_time.setText(task.getTime());
+        }
+
         FloatingActionButton fabSave = (FloatingActionButton) findViewById(R.id.fabSave);
         if (fabSave != null) {
             fabSave.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
 
-                    EditText edit_desc = (EditText) findViewById(R.id.edit_desc);
+                    edit_desc = (EditText) findViewById(R.id.edit_desc);
                     desc = edit_desc.getText().toString();
 
                     if (TextUtils.isEmpty(desc) || date.equals("") || time.equals("")) {
@@ -82,6 +100,17 @@ public class InsertActivity extends AppCompatActivity {
 
                         //insert new row to dbs
                         long id = db.insert(TaskContract.TaskEntry.TABLE_NAME, null, values);
+
+                        if(edit){
+                            String selection = TaskContract.TaskEntry._ID + " LIKE ?";
+                            String[] selectionArgs = { String.valueOf(id) };
+
+                            int count = db.update(
+                                    TaskContract.TaskEntry.TABLE_NAME,
+                                    values,
+                                    selection,
+                                    selectionArgs);
+                        }
 
                         finish();
                     }
@@ -122,7 +151,8 @@ public class InsertActivity extends AppCompatActivity {
 
                 @Override
                 public void onDateSet(DatePicker view, int year, int month, int day){
-                    TextView text_date = (TextView) getActivity().findViewById(R.id.text_date);
+
+                    text_date = (TextView) getActivity().findViewById(R.id.text_date);
 
                     today = (year == c.get(Calendar.YEAR))
                             && (month == c.get(Calendar.MONTH))
@@ -133,13 +163,14 @@ public class InsertActivity extends AppCompatActivity {
                         text_date.setText("");
                     }
                     else{
-                        final Calendar c = Calendar.getInstance();
                         c.set(year, month, day);
 
                         date = Long.toString(c.getTimeInMillis());
 
                         SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
                         text_date.setText(dateFormatter.format(Long.parseLong(date)));
+
+                        Log.d("the date in milis", date);
                     }
 
                 }
@@ -174,7 +205,6 @@ public class InsertActivity extends AppCompatActivity {
                                 showAlertDialog(getActivity(), R.string.dialog_message);
                                 text_time.setText("");
                             } else {
-                                final Calendar c = Calendar.getInstance();
                                 c.set(hour, minute);
 
                                 time = Long.toString(c.getTimeInMillis());
@@ -182,7 +212,9 @@ public class InsertActivity extends AppCompatActivity {
                                 SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm a");
                                 text_time.setText(timeFormatter.format(Long.parseLong(time)));
 
-                                Log.d("the date in milis", time);
+
+                                time =  timeFormatter.format(Long.parseLong(time));
+                                Log.d("the time in milis2", time);
                             }
                         }
                     }, hour, minute, DateFormat.is24HourFormat(getActivity()));
