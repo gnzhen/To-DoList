@@ -45,6 +45,9 @@ public class InsertActivity extends AppCompatActivity {
     public static TextView text_time;
     public static TextView text_date;
     public static EditText edit_desc;
+    public static SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
+    public static SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm a");
+    public static Task task;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +68,7 @@ public class InsertActivity extends AppCompatActivity {
         edit = (Boolean)args.getSerializable("EDIT");
 
         if(edit){
-            Task task = (Task)args.getSerializable("TASK");
+            task = (Task)args.getSerializable("TASK");
 
             edit_desc = (EditText) findViewById(R.id.edit_desc);
             text_date = (TextView) findViewById(R.id.text_date);
@@ -74,6 +77,22 @@ public class InsertActivity extends AppCompatActivity {
             edit_desc.setText(task.getDesc());
             text_date.setText(task.getDate());
             text_time.setText(task.getTime());
+
+            String dateString = task.getDate();
+            String timeString = task.getTime();
+            String dateTimeString = dateString + " " + timeString;
+            Date convertedDate = new Date();
+            Date convertedTime = new Date();
+
+            try {
+                convertedDate = dateFormatter.parse(dateString);
+                SimpleDateFormat datetimeFormatter = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
+                convertedTime = datetimeFormatter.parse(dateTimeString);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            date = Long.toString(convertedDate.getTime());
+            time = Long.toString(convertedTime.getTime());
         }
 
         FloatingActionButton fabSave = (FloatingActionButton) findViewById(R.id.fabSave);
@@ -85,32 +104,38 @@ public class InsertActivity extends AppCompatActivity {
                     edit_desc = (EditText) findViewById(R.id.edit_desc);
                     desc = edit_desc.getText().toString();
 
-                    if (TextUtils.isEmpty(desc) || date.equals("") || time.equals("")) {
+                    if ((!edit && (TextUtils.isEmpty(desc) || date.equals("") || time.equals("")))
+                            || (edit && TextUtils.isEmpty(desc))) {
                         showAlertDialog(InsertActivity.this, R.string.dialog_message1);
                     }
                     else {
+
                         mDbHelper = new TaskDbHelper(getApplicationContext());
                         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
-                        //write to dbs
                         ContentValues values = new ContentValues();
+                        //write to dbs
                         values.put(TaskContract.TaskEntry.COLUMN_NAME_DESC, desc);
                         values.put(TaskContract.TaskEntry.COLUMN_NAME_DATE, date);
                         values.put(TaskContract.TaskEntry.COLUMN_NAME_TIME, time);
 
-                        //insert new row to dbs
-                        long id = db.insert(TaskContract.TaskEntry.TABLE_NAME, null, values);
-
                         if(edit){
                             String selection = TaskContract.TaskEntry._ID + " LIKE ?";
-                            String[] selectionArgs = { String.valueOf(id) };
+                            String[] selectionArgs = { String.valueOf(Long.toString(task.getId())) };
 
                             int count = db.update(
                                     TaskContract.TaskEntry.TABLE_NAME,
                                     values,
                                     selection,
                                     selectionArgs);
+
+                            //db.delete(TaskContract.TaskEntry.TABLE_NAME, selection, selectionArgs);
                         }
+                        else{
+                            //insert new row to dbs
+                            long id = db.insert(TaskContract.TaskEntry.TABLE_NAME, null, values);
+                        }
+
 
                         finish();
                     }
@@ -167,10 +192,7 @@ public class InsertActivity extends AppCompatActivity {
 
                         date = Long.toString(c.getTimeInMillis());
 
-                        SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
                         text_date.setText(dateFormatter.format(Long.parseLong(date)));
-
-                        Log.d("the date in milis", date);
                     }
 
                 }
@@ -195,7 +217,7 @@ public class InsertActivity extends AppCompatActivity {
                         @Override
                         public void onTimeSet(TimePicker view, int hour, int minute) {
 
-                            TextView text_time = (TextView) getActivity().findViewById(R.id.text_time);
+                            text_time = (TextView) getActivity().findViewById(R.id.text_time);
 
                             pastTime = hour < c.get(Calendar.HOUR_OF_DAY)
                                     || (hour <= c.get(Calendar.HOUR_OF_DAY)
@@ -205,16 +227,13 @@ public class InsertActivity extends AppCompatActivity {
                                 showAlertDialog(getActivity(), R.string.dialog_message);
                                 text_time.setText("");
                             } else {
-                                c.set(hour, minute);
+                                //c.set(hour, minute);
+                                c.set(Calendar.HOUR_OF_DAY, hour);
+                                c.set(Calendar.MINUTE, minute);
 
                                 time = Long.toString(c.getTimeInMillis());
 
-                                SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm a");
                                 text_time.setText(timeFormatter.format(Long.parseLong(time)));
-
-
-                                time =  timeFormatter.format(Long.parseLong(time));
-                                Log.d("the time in milis2", time);
                             }
                         }
                     }, hour, minute, DateFormat.is24HourFormat(getActivity()));
