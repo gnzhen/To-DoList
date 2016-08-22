@@ -12,5 +12,18 @@
     <string name="dialog_message">The time you choose is in the past. Please select again.</string>
     <string name="dialog_message1">Details is not complete.</string>
     <string name="ok">OK</string>
+    <string name="save">Saved!</string>
+    <string-array name="function_array1">
+        <item>Mark Undone</item>
+        <item>Edit</item>
+        <item>Delete</item>
+        <item>Cancel</item>
+    </string-array>
+    <string-array name="function_array2">
+        <item>Mark Done</item>
+        <item>Edit</item>
+        <item>Delete</item>
+        <item>Cancel</item>
+    </string-array>
 
 </resources>

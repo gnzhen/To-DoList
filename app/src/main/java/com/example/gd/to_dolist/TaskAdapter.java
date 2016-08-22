@@ -22,15 +22,10 @@ public class TaskAdapter extends ArrayAdapter {
 
     public TaskAdapter (Activity activity, int textViewResourceId, ArrayList<Task> tasks) {
         super(activity, textViewResourceId, tasks);
-        try {
-            this.activity = activity;
-            this.tasks = tasks;
+        this.activity = activity;
+        this.tasks = tasks;
 
-            inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-        } catch (Exception e) {
-
-        }
+        inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
     public int getCount() {
@@ -66,14 +61,12 @@ public class TaskAdapter extends ArrayAdapter {
 
         try {
             if (convertView == null) {
-                if(status == "Done")
+                if(status.equals("Done"))
                     view = inflater.inflate(R.layout.task_list_done, null);
-                else if(status == "")
+                else if(status.equals(""))
                     view = inflater.inflate(R.layout.task_list_normal, null);
-                else if(status == "Overdue")
+                else if(status.equals("Overdue"))
                     view = inflater.inflate(R.layout.task_list_overdue, null);
-
-                Log.d("status in getView", status);
 
                 holder = new ViewHolder();
                 holder.taskDesc = (TextView) view.findViewById(R.id.task_desc);

@@ -133,13 +133,13 @@ public class InsertActivity extends AppCompatActivity {
                                     values,
                                     selection,
                                     selectionArgs);
-
-                            //db.delete(TaskContract.TaskEntry.TABLE_NAME, selection, selectionArgs);
                         }
                         else{
                             //insert new row to dbs
                             long id = db.insert(TaskContract.TaskEntry.TABLE_NAME, null, values);
                         }
+                        Toast.makeText(getApplicationContext(), "Saved!", Toast.LENGTH_LONG).show();
+
                         finish();
                     }
                 }
