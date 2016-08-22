@@ -2,6 +2,7 @@ package com.example.gd.to_dolist;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,20 +56,30 @@ public class TaskAdapter extends ArrayAdapter {
         public TextView taskDesc;
         public TextView taskDate;
         public TextView taskTime;
+        public TextView taskStatus;
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
         View view = convertView;
         final ViewHolder holder;
+        String status = tasks.get(position).getStatus();
 
         try {
             if (convertView == null) {
-                view = inflater.inflate(R.layout.task_list_item, null);
+                if(status == "Done")
+                    view = inflater.inflate(R.layout.task_list_done, null);
+                else if(status == "")
+                    view = inflater.inflate(R.layout.task_list_normal, null);
+                else if(status == "Overdue")
+                    view = inflater.inflate(R.layout.task_list_overdue, null);
+
+                Log.d("status in getView", status);
 
                 holder = new ViewHolder();
                 holder.taskDesc = (TextView) view.findViewById(R.id.task_desc);
                 holder.taskDate = (TextView) view.findViewById(R.id.task_date);
                 holder.taskTime = (TextView) view.findViewById(R.id.task_time);
+                holder.taskStatus = (TextView) view.findViewById(R.id.task_status);
 
                 view.setTag(holder);
             }
@@ -77,9 +88,9 @@ public class TaskAdapter extends ArrayAdapter {
             }
 
             holder.taskDesc.setText(tasks.get(position).getDesc());
-            holder.taskDesc.setText(tasks.get(position).getDesc());
             holder.taskDate.setText(tasks.get(position).getDate());
             holder.taskTime.setText(tasks.get(position).getTime());
+            holder.taskStatus.setText(tasks.get(position).getStatus());
 
 
         } catch (Exception e) {

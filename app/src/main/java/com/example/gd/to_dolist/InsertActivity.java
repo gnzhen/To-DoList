@@ -40,7 +40,7 @@ public class InsertActivity extends AppCompatActivity {
 
     public static boolean today = false, pastTime = false;
     public static TaskDbHelper mDbHelper;
-    public static String desc, date, time;
+    public static String desc, date, time, status;
     public static Boolean edit;
     public static TextView text_time;
     public static TextView text_date;
@@ -93,6 +93,7 @@ public class InsertActivity extends AppCompatActivity {
             }
             date = Long.toString(convertedDate.getTime());
             time = Long.toString(convertedTime.getTime());
+            status = task.getStatus();
         }
 
         FloatingActionButton fabSave = (FloatingActionButton) findViewById(R.id.fabSave);
@@ -103,6 +104,9 @@ public class InsertActivity extends AppCompatActivity {
 
                     edit_desc = (EditText) findViewById(R.id.edit_desc);
                     desc = edit_desc.getText().toString();
+
+                    if(!edit)
+                        status = "";
 
                     if ((!edit && (TextUtils.isEmpty(desc) || date.equals("") || time.equals("")))
                             || (edit && TextUtils.isEmpty(desc))) {
@@ -118,6 +122,7 @@ public class InsertActivity extends AppCompatActivity {
                         values.put(TaskContract.TaskEntry.COLUMN_NAME_DESC, desc);
                         values.put(TaskContract.TaskEntry.COLUMN_NAME_DATE, date);
                         values.put(TaskContract.TaskEntry.COLUMN_NAME_TIME, time);
+                        values.put(TaskContract.TaskEntry.COLUMN_NAME_STATUS, status);
 
                         if(edit){
                             String selection = TaskContract.TaskEntry._ID + " LIKE ?";
@@ -135,8 +140,6 @@ public class InsertActivity extends AppCompatActivity {
                             //insert new row to dbs
                             long id = db.insert(TaskContract.TaskEntry.TABLE_NAME, null, values);
                         }
-
-
                         finish();
                     }
                 }
@@ -186,6 +189,7 @@ public class InsertActivity extends AppCompatActivity {
                     if (today && pastTime && !time.equals("")){
                         showAlertDialog(getActivity(), R.string.dialog_message);
                         text_date.setText("");
+                        date = "";
                     }
                     else{
                         c.set(year, month, day);
@@ -226,6 +230,7 @@ public class InsertActivity extends AppCompatActivity {
                             if (today && pastTime && !date.equals("")) {
                                 showAlertDialog(getActivity(), R.string.dialog_message);
                                 text_time.setText("");
+                                time = "";
                             } else {
                                 //c.set(hour, minute);
                                 c.set(Calendar.HOUR_OF_DAY, hour);

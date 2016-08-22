@@ -1,5 +1,6 @@
 package com.example.gd.to_dolist;
 
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -11,6 +12,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
@@ -32,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private static TaskDbHelper mDbHelper;
     ArrayList<Task> tasks;
     Boolean edit = false;
-    String desc, date, time;
+    String desc, date, time, status;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +43,21 @@ public class MainActivity extends AppCompatActivity {
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        if (fab != null) {
+            fab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(getApplicationContext(), InsertActivity.class);
+                    Bundle args = new Bundle();
+                    args.putSerializable("EDIT", edit);
+                    intent.putExtras(args);
+                    startActivity(intent);
+
+                }
+            });
+        }
     }
 
     @Override
@@ -57,7 +74,8 @@ public class MainActivity extends AppCompatActivity {
                 TaskContract.TaskEntry._ID,
                 TaskContract.TaskEntry.COLUMN_NAME_DESC,
                 TaskContract.TaskEntry.COLUMN_NAME_DATE,
-                TaskContract.TaskEntry.COLUMN_NAME_TIME
+                TaskContract.TaskEntry.COLUMN_NAME_TIME,
+                TaskContract.TaskEntry.COLUMN_NAME_STATUS
         };
 
         String sortOrder = TaskContract.TaskEntry._ID + " DESC"; //ascending
@@ -82,13 +100,25 @@ public class MainActivity extends AppCompatActivity {
                         (TaskContract.TaskEntry.COLUMN_NAME_DATE));
                 time = cursor.getString(cursor.getColumnIndexOrThrow
                         (TaskContract.TaskEntry.COLUMN_NAME_TIME));
+                status = cursor.getString(cursor.getColumnIndexOrThrow
+                        (TaskContract.TaskEntry.COLUMN_NAME_STATUS));
 
                 SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
                 SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm a");
                 date = dateFormatter.format(Long.parseLong(date));
                 time = timeFormatter.format(Long.parseLong(time));
 
-                Task task = new Task(id, desc, date, time, false);
+                Task task = new Task(id, desc, date, time, status);
+
+                if(status != "Done"){
+                    if(task.checkOverdue())
+                        task.setStatus("Overdue");
+                    else
+                        task.setStatus("");
+
+                    Log.d("after check overdue=", task.getStatus());
+                }
+
                 tasks.add(task);
 
             } while (cursor.moveToNext());
@@ -123,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("the item id is", Long.toString(itemId));
                     Log.d("the task id is", Long.toString(task.getId()));
                     Log.d("the task desc is", task.getDesc());
+                    Log.d("the task status is", status);
                 }
             });
         }
@@ -140,11 +171,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_add_task: {
-                Intent intent = new Intent(this, InsertActivity.class);
-                Bundle args = new Bundle();
-                args.putSerializable("EDIT", edit);
-                intent.putExtras(args);
-                startActivity(intent);
+
             }
             case R.id.action_settings: {
             }

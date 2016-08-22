@@ -14,7 +14,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@color/blue">
+        android:background="@color/pink">
 
         <TextView
             android:id="@+id/text_task"
@@ -37,7 +37,7 @@
             android:layout_marginBottom="20dp"
             android:theme="@style/Theme.App.Base"
             android:textColor="@color/white"
-            android:textSize="20dp"
+            android:textSize="23dp"
             android:hint="@string/edit_task"
             android:textColorHint="@color/white"/>
     </LinearLayout>
