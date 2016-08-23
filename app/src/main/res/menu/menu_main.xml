@@ -8,10 +8,10 @@
         android:title="@string/action_settings"
         app:showAsAction="never" />
 
-    <item
+    <!--<item
         android:id="@+id/action_add_task"
         android:title="Add task"
         android:icon="@drawable/ic_add_white_24dp"
-        app:showAsAction="always" />
+        app:showAsAction="always" />-->
 
 </menu>

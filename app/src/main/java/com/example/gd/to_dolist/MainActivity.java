@@ -31,13 +31,19 @@ import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
     private static TaskDbHelper mDbHelper;
     ArrayList<Task> tasks;
     Boolean edit = false;
-    String desc, date, time, status;
+    String desc, date, time, status, displayDate, displayTime;
+    ListView listView;
+    Cursor cursor;
+    String sortOrder;
+    TaskAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,9 +87,9 @@ public class MainActivity extends AppCompatActivity {
                 TaskContract.TaskEntry.COLUMN_NAME_STATUS
         };
 
-        String sortOrder = TaskContract.TaskEntry._ID + " DESC"; //ascending
+        sortOrder = TaskContract.TaskEntry._ID + " DESC"; //ascending
 
-        Cursor cursor = db.query(
+        cursor = db.query(
                 TaskContract.TaskEntry.TABLE_NAME,
                 projection,
                 null,
@@ -106,12 +112,12 @@ public class MainActivity extends AppCompatActivity {
                 status = cursor.getString(cursor.getColumnIndexOrThrow
                         (TaskContract.TaskEntry.COLUMN_NAME_STATUS));
 
+                Task task = new Task(id, desc, date, time, status);
+
                 SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
                 SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm a");
-                date = dateFormatter.format(Long.parseLong(date));
-                time = timeFormatter.format(Long.parseLong(time));
-
-                Task task = new Task(id, desc, date, time, status);
+                displayDate = dateFormatter.format(Long.parseLong(date));
+                displayTime = timeFormatter.format(Long.parseLong(time));
 
                 if(!status.equals("Done")){
                     if(task.checkOverdue())
@@ -125,8 +131,8 @@ public class MainActivity extends AppCompatActivity {
             } while (cursor.moveToNext());
         }
 
-        final TaskAdapter adapter = new TaskAdapter(this, 0, tasks);
-        final ListView listView = (ListView) findViewById(R.id.list_view);
+        adapter = new TaskAdapter(this, 0, tasks);
+        listView = (ListView) findViewById(R.id.list_view);
         if (adapter.getCount() != 0) {
             listView.post(new Runnable() {
                 @Override
@@ -140,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onItemClick(AdapterView<?> adapterView, View view, int pos, long id) {
 
-                    Task task = adapter.getItem(pos-1);
+                    Task task = adapter.getItem(pos);
 
                     editTask(task);
                 }
@@ -150,8 +156,13 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public boolean onItemLongClick(AdapterView<?> adapterView, View view, int pos, long id) {
 
-                    Task task = adapter.getItem(pos-1);
+                    Task task = adapter.getItem(pos);
                     showFunctionDialog(MainActivity.this, task);
+
+                    /*Log.d("the item id is", Long.toString(id));
+                    Log.d("the task id is", Long.toString(task.getId()));
+                    Log.d("the task desc is", task.getDesc());
+                    Log.d("the task status is", status);*/
 
                     return true;
                 }
@@ -170,9 +181,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_add_task: {
+            /*case R.id.action_add_task: {
 
-            }
+            }*/
             case R.id.action_settings: {
             }
             default:
@@ -205,7 +216,25 @@ public class MainActivity extends AppCompatActivity {
                             task.setStatus("Done");
 
                         Toast.makeText(getApplicationContext(), "Marked Done!", Toast.LENGTH_LONG).show();
-                        Log.d("status after mark", task.getStatus());
+
+                        mDbHelper = new TaskDbHelper(getApplicationContext());
+                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+                        String selection = TaskContract.TaskEntry._ID + " LIKE ?";
+                        String[] selectionArgs = { String.valueOf(Long.toString(task.getId())) };
+
+                        ContentValues values = new ContentValues();
+                        values.put(TaskContract.TaskEntry.COLUMN_NAME_DESC, task.getDesc());
+                        values.put(TaskContract.TaskEntry.COLUMN_NAME_DATE, task.getDate());
+                        values.put(TaskContract.TaskEntry.COLUMN_NAME_TIME, task.getTime());
+                        values.put(TaskContract.TaskEntry.COLUMN_NAME_STATUS, task.getStatus());
+
+                        int count = db.update(
+                                TaskContract.TaskEntry.TABLE_NAME,
+                                values,
+                                selection,
+                                selectionArgs);
+
                         onResume();
                         break;
                     }
@@ -219,14 +248,31 @@ public class MainActivity extends AppCompatActivity {
                         mDbHelper = new TaskDbHelper(getApplicationContext());
                         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
-                        String selection = TaskContract.TaskEntry._ID + " LIKE ?";
-                        String[] selectionArgs = { String.valueOf(Long.toString(task.getId())) };
+                        tasks.remove(task);
 
-                        db.delete(TaskContract.TaskEntry.TABLE_NAME, selection, selectionArgs);
+                        //getApplicationContext().deleteDatabase("task.db");
+                        db.delete(TaskContract.TaskEntry.TABLE_NAME, null, null);
+
+                        ContentValues values = new ContentValues();
+
+                        Collections.reverse(tasks);
+
+                        for(Task t: tasks){
+                            values.put(TaskContract.TaskEntry.COLUMN_NAME_DESC, t.getDesc());
+                            values.put(TaskContract.TaskEntry.COLUMN_NAME_DATE, t.getDate());
+                            values.put(TaskContract.TaskEntry.COLUMN_NAME_TIME, t.getTime());
+                            values.put(TaskContract.TaskEntry.COLUMN_NAME_STATUS, t.getStatus());
+
+                            long id = db.insert(TaskContract.TaskEntry.TABLE_NAME, null, values);
+                        }
+
+                        adapter.notifyDataSetChanged();
+                        onResume();
+
+                        //db.delete(TaskContract.TaskEntry.TABLE_NAME, selection, selectionArgs);
 
                         Toast.makeText(getApplicationContext(), "Deleted!", Toast.LENGTH_LONG).show();
 
-                        onResume();
                         break;
                     }
 

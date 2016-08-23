@@ -38,15 +38,17 @@ import java.util.Date;
 
 public class InsertActivity extends AppCompatActivity {
 
-    public static boolean today = false, pastTime = false;
     public static TaskDbHelper mDbHelper;
-    public static String desc, date, time, status;
+    public static String desc, date, time, status, displayDate, displayTime;
     public static Boolean edit;
     public static TextView text_time;
     public static TextView text_date;
     public static EditText edit_desc;
+
     public static SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
     public static SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm a");
+    public static Date convertedDate = new Date();
+    public static Date convertedTime = new Date();
     public static Task task;
 
     @Override
@@ -74,25 +76,16 @@ public class InsertActivity extends AppCompatActivity {
             text_date = (TextView) findViewById(R.id.text_date);
             text_time = (TextView) findViewById(R.id.text_time);
 
+            date = task.getDate();
+            time = task.getTime();
+
+            displayDate = dateFormatter.format(Long.parseLong(date));
+            displayTime = timeFormatter.format(Long.parseLong(time));
+
             edit_desc.setText(task.getDesc());
-            text_date.setText(task.getDate());
-            text_time.setText(task.getTime());
+            text_date.setText(displayDate);
+            text_time.setText(displayTime);
 
-            String dateString = task.getDate();
-            String timeString = task.getTime();
-            String dateTimeString = dateString + " " + timeString;
-            Date convertedDate = new Date();
-            Date convertedTime = new Date();
-
-            try {
-                convertedDate = dateFormatter.parse(dateString);
-                SimpleDateFormat datetimeFormatter = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
-                convertedTime = datetimeFormatter.parse(dateTimeString);
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            date = Long.toString(convertedDate.getTime());
-            time = Long.toString(convertedTime.getTime());
             status = task.getStatus();
         }
 
@@ -102,6 +95,7 @@ public class InsertActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
 
+                    Calendar c = Calendar.getInstance();
                     edit_desc = (EditText) findViewById(R.id.edit_desc);
                     desc = edit_desc.getText().toString();
 
@@ -111,6 +105,11 @@ public class InsertActivity extends AppCompatActivity {
                     if ((!edit && (TextUtils.isEmpty(desc) || date.equals("") || time.equals("")))
                             || (edit && TextUtils.isEmpty(desc))) {
                         showAlertDialog(InsertActivity.this, R.string.dialog_message1);
+                    }
+                    else if(!status.equals("Overdue") && Long.parseLong(date) <= c.getTimeInMillis()
+                            && Long.parseLong(time) <= c.getTimeInMillis()){
+
+                        showAlertDialog(InsertActivity.this, R.string.dialog_message);
                     }
                     else {
 
@@ -173,7 +172,6 @@ public class InsertActivity extends AppCompatActivity {
             int month = c.get(Calendar.MONTH);
             int day = c.get(Calendar.DAY_OF_MONTH);
 
-
             DatePickerDialog datePickerDialog =
                     new DatePickerDialog(getContext(), new DatePickerDialog.OnDateSetListener(){
 
@@ -182,23 +180,28 @@ public class InsertActivity extends AppCompatActivity {
 
                     text_date = (TextView) getActivity().findViewById(R.id.text_date);
 
+                    /*pastDate = (year < c.get(Calendar.YEAR))
+                            && (month < c.get(Calendar.MONTH))
+                            && (day < c.get(Calendar.DAY_OF_MONTH));
+
                     today = (year == c.get(Calendar.YEAR))
                             && (month == c.get(Calendar.MONTH))
                             && (day == c.get(Calendar.DAY_OF_MONTH));
 
-                    if (today && pastTime && !time.equals("")){
+                    if(!timePickerPress)
+                        pastTime = Double.parseDouble(task.getTime())
+                                <= Double.parseDouble(Long.toString(c.getTimeInMillis()));
+
+                    if (pastDate && pastTime && !time.equals("")){
                         showAlertDialog(getActivity(), R.string.dialog_message);
                         text_date.setText("");
                         date = "";
-                    }
-                    else{
-                        c.set(year, month, day);
+                    }*/
+                    c.set(year, month, day);
 
-                        date = Long.toString(c.getTimeInMillis());
+                    date = Long.toString(c.getTimeInMillis());
 
-                        text_date.setText(dateFormatter.format(Long.parseLong(date)));
-                    }
-
+                    text_date.setText(dateFormatter.format(Long.parseLong(date)));
                 }
             },year, month, day);
 
@@ -223,23 +226,29 @@ public class InsertActivity extends AppCompatActivity {
 
                             text_time = (TextView) getActivity().findViewById(R.id.text_time);
 
-                            pastTime = hour < c.get(Calendar.HOUR_OF_DAY)
-                                    || (hour <= c.get(Calendar.HOUR_OF_DAY)
-                                    && minute <= c.get(Calendar.MINUTE));
+                            /*pastTime = Double.parseDouble(task.getTime())
+                                    <= Double.parseDouble(Long.toString(c.getTimeInMillis()));
 
-                            if (today && pastTime && !date.equals("")) {
+                            if(!datePickerPress){
+                                pastDate = Double.parseDouble(task.getDate())
+                                        <= Double.parseDouble(Long.toString(c.getTimeInMillis()));
+
+                                today = (year == c.get(Calendar.YEAR))
+                                        && (month == c.get(Calendar.MONTH))
+                                        && (day == c.get(Calendar.DAY_OF_MONTH));
+                            }
+
+                            if (pastDate || today && pastTime && !date.equals("")) {
                                 showAlertDialog(getActivity(), R.string.dialog_message);
                                 text_time.setText("");
                                 time = "";
-                            } else {
-                                //c.set(hour, minute);
+                            } else {*/
                                 c.set(Calendar.HOUR_OF_DAY, hour);
                                 c.set(Calendar.MINUTE, minute);
 
                                 time = Long.toString(c.getTimeInMillis());
 
                                 text_time.setText(timeFormatter.format(Long.parseLong(time)));
-                            }
                         }
                     }, hour, minute, DateFormat.is24HourFormat(getActivity()));
 

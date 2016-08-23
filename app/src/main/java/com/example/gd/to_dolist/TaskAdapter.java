@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 /**
@@ -80,9 +81,14 @@ public class TaskAdapter extends ArrayAdapter {
                 holder = (ViewHolder) view.getTag();
             }
 
+            SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
+            SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm a");
+            String displayDate = dateFormatter.format(Long.parseLong(tasks.get(position).getDate()));
+            String displayTime = timeFormatter.format(Long.parseLong(tasks.get(position).getTime()));
+
             holder.taskDesc.setText(tasks.get(position).getDesc());
-            holder.taskDate.setText(tasks.get(position).getDate());
-            holder.taskTime.setText(tasks.get(position).getTime());
+            holder.taskDate.setText(displayDate);
+            holder.taskTime.setText(displayTime);
             holder.taskStatus.setText(tasks.get(position).getStatus());
 
 

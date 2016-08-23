@@ -23,7 +23,7 @@ public class Task implements java.io.Serializable {
     private String time;
     private String status;
 
-    public Task(){};
+    public Task(){}
 
     //constructor
     public Task(long id, String desc, String date, String time, String status){
@@ -59,23 +59,8 @@ public class Task implements java.io.Serializable {
     public boolean checkOverdue() {
         Calendar c = Calendar.getInstance();
         Long time_now = c.getTimeInMillis();
-        Date convertedDate = new Date();
-        Date convertedTime = new Date();
-        Double time_now_compare, time_compare;
 
-        try {
-            String dateTime = date + " " + time;
-            convertedDate = dateTimeFormatter.parse(dateTime);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
-        time_compare = Double.parseDouble(Long.toString(convertedDate.getTime()));
-        time_now_compare = Double.parseDouble(Long.toString(time_now));
-
-        if(time_compare < time_now_compare)
-            return true;
-        else
-            return false;
+        return (Double.parseDouble(time) < Double.parseDouble(Long.toString(time_now))
+                && Double.parseDouble(date) <= Double.parseDouble(Long.toString(time_now)));
     }
 }
