@@ -8,6 +8,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
@@ -54,21 +55,13 @@ public class ReminderActivity extends AppCompatActivity{
                 int id = Integer.parseInt(Long.toString(task.getId()));
 
                 if (cbx_snooze.isChecked()) {
-                    Intent alarmIntent = new Intent(getApplicationContext(), AlarmReceiver.class);
-                    Bundle bundle = new Bundle();
-                    bundle.putSerializable("task", task);
-                    alarmIntent.putExtras(bundle);
-
-                    PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                            ReminderActivity.this, id, alarmIntent,0);
-
-                    AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
-                    pendingIntent.cancel();
-                    alarmManager.cancel(pendingIntent);
+                    task.setReminder(0);
                 }
                 if(cbx_markDone.isChecked()){
                     task.setStatus("Done");
                 }
+                MainActivity mainActivity = new MainActivity();
+                mainActivity.readFromDb();
             }
         });
 

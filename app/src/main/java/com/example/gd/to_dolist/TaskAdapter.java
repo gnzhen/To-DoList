@@ -92,9 +92,8 @@ public class TaskAdapter extends ArrayAdapter {
             holder.taskStatus.setText(tasks.get(position).getStatus());
 
 
-        } catch (Exception e) {
-
-
+        }
+        catch (Exception e) {
         }
         return view;
     }

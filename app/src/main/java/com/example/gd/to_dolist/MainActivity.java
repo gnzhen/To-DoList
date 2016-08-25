@@ -37,11 +37,11 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<Task> tasks;
     Boolean edit = false;
     String desc, date, time, status, displayDate, displayTime;
+    int reminder;
     ListView listView;
     Cursor cursor;
     String sortOrder;
     TaskAdapter adapter;
-    private static final long serialVersionUID = 9103658319690261655L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,28 +120,10 @@ public class MainActivity extends AppCompatActivity {
                         else
                             task.setStatus("Done");
 
-                        Toast.makeText(getApplicationContext(), "Marked Done!", Toast.LENGTH_LONG).show();
-
-                        mDbHelper = new TaskDbHelper(getApplicationContext());
-                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-                        String selection = TaskContract.TaskEntry._ID + " LIKE ?";
-                        String[] selectionArgs = { String.valueOf(Long.toString(task.getId())) };
-
-                        ContentValues values = new ContentValues();
-                        values.put(TaskContract.TaskEntry.COLUMN_NAME_DESC, task.getDesc());
-                        values.put(TaskContract.TaskEntry.COLUMN_NAME_DATE, task.getDate());
-                        values.put(TaskContract.TaskEntry.COLUMN_NAME_TIME, task.getTime());
-                        values.put(TaskContract.TaskEntry.COLUMN_NAME_STATUS, task.getStatus());
-
-                        int count = db.update(
-                                TaskContract.TaskEntry.TABLE_NAME,
-                                values,
-                                selection,
-                                selectionArgs);
-
+                        updateDatabase(task);
                         readFromDb();
                         setListView();
+                        scheduleReminder();
                         break;
                     }
 
@@ -151,10 +133,10 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     case 2:{
+                        tasks.remove(task);
+
                         mDbHelper = new TaskDbHelper(getApplicationContext());
                         SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-                        tasks.remove(task);
 
                         //getApplicationContext().deleteDatabase("task.db");
                         db.delete(TaskContract.TaskEntry.TABLE_NAME, null, null);
@@ -168,6 +150,8 @@ public class MainActivity extends AppCompatActivity {
                             values.put(TaskContract.TaskEntry.COLUMN_NAME_DATE, t.getDate());
                             values.put(TaskContract.TaskEntry.COLUMN_NAME_TIME, t.getTime());
                             values.put(TaskContract.TaskEntry.COLUMN_NAME_STATUS, t.getStatus());
+                            values.put(TaskContract.TaskEntry.COLUMN_NAME_REMINDER, t.getReminder());
+
 
                             long id = db.insert(TaskContract.TaskEntry.TABLE_NAME, null, values);
                         }
@@ -180,6 +164,7 @@ public class MainActivity extends AppCompatActivity {
 
                         readFromDb();
                         setListView();
+                        scheduleReminder();
 
                         break;
                     }
@@ -190,16 +175,8 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     case 4:{
-                        Intent alarmIntent = new Intent(getApplicationContext(), AlarmReceiver.class);
-                        Bundle bundle = new Bundle();
-                        bundle.putSerializable("task", task);
-                        alarmIntent.putExtras(bundle);
-
-                        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                                MainActivity.this, Integer.parseInt(Long.toString(task.getId())), alarmIntent,0);
-
-                        AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
-                        alarmManager.cancel(pendingIntent);
+                        task.setReminder(0);
+                        scheduleReminder();
                         break;
                     }
                 }
@@ -232,7 +209,8 @@ public class MainActivity extends AppCompatActivity {
                 TaskContract.TaskEntry.COLUMN_NAME_DESC,
                 TaskContract.TaskEntry.COLUMN_NAME_DATE,
                 TaskContract.TaskEntry.COLUMN_NAME_TIME,
-                TaskContract.TaskEntry.COLUMN_NAME_STATUS
+                TaskContract.TaskEntry.COLUMN_NAME_STATUS,
+                TaskContract.TaskEntry.COLUMN_NAME_REMINDER
         };
 
         sortOrder = TaskContract.TaskEntry._ID + " DESC"; //ascending
@@ -259,8 +237,10 @@ public class MainActivity extends AppCompatActivity {
                         (TaskContract.TaskEntry.COLUMN_NAME_TIME));
                 status = cursor.getString(cursor.getColumnIndexOrThrow
                         (TaskContract.TaskEntry.COLUMN_NAME_STATUS));
+                reminder = cursor.getInt(cursor.getColumnIndexOrThrow
+                        (TaskContract.TaskEntry.COLUMN_NAME_REMINDER));
 
-                Task task = new Task(id, desc, date, time, status);
+                Task task = new Task(id, desc, date, time, status, reminder);
 
                 displayDate = task.convertDate();
                 displayTime = task.convertTime();
@@ -298,13 +278,6 @@ public class MainActivity extends AppCompatActivity {
 
                     Task task = adapter.getItem(pos);
 
-                    /*
-                    Intent reminderService = new Intent(getApplicationContext(), ReminderService.class);
-                    Bundle bundle = new Bundle();
-                    bundle.putSerializable("task", task);
-                    reminderService.putExtras(bundle);
-                    getApplicationContext().startService(reminderService);*/
-
                     editTask(task);
                 }
             });
@@ -316,11 +289,6 @@ public class MainActivity extends AppCompatActivity {
                     Task task = adapter.getItem(pos);
                     showFunctionDialog(MainActivity.this, task);
 
-                    /*Log.d("the item id is", Long.toString(id));
-                    Log.d("the task id is", Long.toString(task.getId()));
-                    Log.d("the task desc is", task.getDesc());
-                    Log.d("the task status is", status);*/
-
                     return true;
                 }
 
@@ -328,64 +296,96 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     private void scheduleReminder() {
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         ArrayList<PendingIntent> intentArray = new ArrayList<PendingIntent>();
 
         for(Task task: tasks){
-            SimpleDateFormat dateTimeFormatter = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
-            String alarmTimeString = task.convertDate() + " " + task.convertTime();
+            if(task.getReminder() == 1){
+                SimpleDateFormat dateTimeFormatter = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
+                String alarmTimeString = task.convertDate() + " " + task.convertTime();
 
-            //Log.d("alarmTimeString", alarmTimeString);
-            String alarmTime = "";
+                String alarmTime = "";
 
-            try {
-                Date date = dateTimeFormatter.parse(alarmTimeString);
-                alarmTime = Long.toString(date.getTime());
+                try {
+                    Date date = dateTimeFormatter.parse(alarmTimeString);
+                    alarmTime = Long.toString(date.getTime());
 
-            } catch (ParseException e) {
-                e.printStackTrace();
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+
+                String stringdatetime = dateTimeFormatter.format(Long.parseLong(alarmTime));
+                Long now = Calendar.getInstance().getTimeInMillis();
+                String stringnow = dateTimeFormatter.format(now);
+
+                Long overdue = now - Long.parseLong(alarmTime);
+                Long overdueMinute = (overdue / 1000) / 60;
+                Long overdueHour = ((overdue / 1000)/60)/60;
+                overdueMinute -= (overdueHour*60);
+                String overdueHr = Long.toString(overdueHour);
+                String overdueMin = Long.toString(overdueMinute);
+
+                Log.d("stringdatetime", stringdatetime);
+                Log.d("stringnow", stringnow);
+                Log.d("overdue", Long.toString(overdue));
+                Log.d("overdue min", overdueMin);
+                Log.d("overdue hour", overdueHr);
+
+                Intent alarmIntent = new Intent("com.example.gd.to_do_list.Task_to_do");
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("task", task);
+                bundle.putSerializable("overdue", overdueMin);
+                alarmIntent.putExtras(bundle);
+                sendBroadcast(alarmIntent);
+
+
+                int id = Integer.parseInt(Long.toString(task.getId()));
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                        MainActivity.this, id, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+                if(!alarmTime.equals("")) {
+                    //alarmManager.set(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime), pendingIntent);
+                    alarmManager.set(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime), pendingIntent);
+                    //long repeatingTime=15*60*1000;
+                    long repeatingTime = 1*60*1000;
+                    long oneHour = 60*60*1000;
+
+                    alarmManager.setRepeating(AlarmManager.RTC_WAKEUP
+                            ,Long.parseLong(alarmTime)-oneHour
+                            ,repeatingTime, pendingIntent);
+
+                    Log.d("pending id", Integer.toString(id));
+
+                }
+                intentArray.add(pendingIntent);
             }
-
-            String stringdatetime = dateTimeFormatter.format(Long.parseLong(alarmTime));
-            Long now = Calendar.getInstance().getTimeInMillis();
-            String stringnow = dateTimeFormatter.format(now);
-
-            Long overdue = now - Long.parseLong(alarmTime);
-            String overdueString = Long.toString((overdue / 1000) / 60);
-
-            Log.d("stringdatetime", stringdatetime);
-            Log.d("stringnow", stringnow);
-            Log.d("overdue", Long.toString(overdue));
-            Log.d("overdue min", overdueString);
-
-            Intent alarmIntent = new Intent("com.example.gd.to_do_list.Task_to_do");
-            Bundle bundle = new Bundle();
-            bundle.putSerializable("task", task);
-            bundle.putSerializable("overdue", overdueString);
-            alarmIntent.putExtras(bundle);
-            sendBroadcast(alarmIntent);
-
-
-            int id = Integer.parseInt(Long.toString(task.getId()));
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                    MainActivity.this, id, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-
-            if(!alarmTime.equals("")) {
-                //alarmManager.set(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime), pendingIntent);
-                alarmManager.set(AlarmManager.RTC_WAKEUP, Calendar.getInstance().getTimeInMillis(), pendingIntent);
-                //long repeatingTime=15*60*1000;
-                long repeatingTime=5*10;
-
-                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, Calendar.getInstance().getTimeInMillis(),repeatingTime, pendingIntent);
-
-                Log.d("pending id", Integer.toString(pendingIntent.getCreatorUid()));
-
-            }
-            intentArray.add(pendingIntent);
         }
+
+    }
+
+    public void updateDatabase(Task task){
+        Toast.makeText(getApplicationContext(), "Marked Done!", Toast.LENGTH_LONG).show();
+
+        mDbHelper = new TaskDbHelper(getApplicationContext());
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+        String selection = TaskContract.TaskEntry._ID + " LIKE ?";
+        String[] selectionArgs = { String.valueOf(Long.toString(task.getId())) };
+
+        ContentValues values = new ContentValues();
+        values.put(TaskContract.TaskEntry.COLUMN_NAME_DESC, task.getDesc());
+        values.put(TaskContract.TaskEntry.COLUMN_NAME_DATE, task.getDate());
+        values.put(TaskContract.TaskEntry.COLUMN_NAME_TIME, task.getTime());
+        values.put(TaskContract.TaskEntry.COLUMN_NAME_STATUS, task.getStatus());
+        values.put(TaskContract.TaskEntry.COLUMN_NAME_REMINDER, task.getReminder());
+
+        int count = db.update(
+                TaskContract.TaskEntry.TABLE_NAME,
+                values,
+                selection,
+                selectionArgs);
 
     }
 }

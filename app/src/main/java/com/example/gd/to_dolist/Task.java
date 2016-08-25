@@ -16,7 +16,6 @@ import java.util.Date;
  */
 public class Task implements java.io.Serializable {
 
-    private static final long serialVersionUID = 4209360273818925922L;
     public static SimpleDateFormat dateTimeFormatter = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
     //property
     private long id;
@@ -24,15 +23,17 @@ public class Task implements java.io.Serializable {
     private String date;
     private String time;
     private String status;
+    private int reminder;
 
     public Task(){}
     //constructor
-    public Task(long id, String desc, String date, String time, String status){
+    public Task(long id, String desc, String date, String time, String status, int reminder){
         this.id = id;
         this.desc = desc;
         this.date = date;
         this.time = time;
         this.status = status;
+        this.reminder = reminder;
     }
 
     public long getId() { return id; }
@@ -40,6 +41,7 @@ public class Task implements java.io.Serializable {
     public String getDate() { return date; }
     public String getTime() { return time; }
     public String getStatus() { return status; }
+    public int getReminder(){return reminder;}
 
     public void setId(long id) {
         this.id = id;
@@ -56,6 +58,7 @@ public class Task implements java.io.Serializable {
     public void setStatus(String status) {
         this.status = status;
     }
+    public void setReminder(int reminder) {this.reminder = reminder;}
 
 
     public boolean checkOverdue() {

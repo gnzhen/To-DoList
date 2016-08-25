@@ -40,6 +40,7 @@ public class InsertActivity extends AppCompatActivity {
 
     public static TaskDbHelper mDbHelper;
     public static String desc, date, time, status, displayDate, displayTime;
+    public static int reminder;
     public static Boolean edit;
     public static TextView text_time;
     public static TextView text_date;
@@ -85,6 +86,7 @@ public class InsertActivity extends AppCompatActivity {
             text_time.setText(displayTime);
 
             status = task.getStatus();
+            reminder = task.getReminder();
         }
 
         FloatingActionButton fabSave = (FloatingActionButton) findViewById(R.id.fabSave);
@@ -97,29 +99,32 @@ public class InsertActivity extends AppCompatActivity {
                     edit_desc = (EditText) findViewById(R.id.edit_desc);
                     desc = edit_desc.getText().toString();
 
-                    if(!edit)
+                    if(!edit){
                         status = "";
+                        reminder = 1;
+                    }
 
                     if ((!edit && (TextUtils.isEmpty(desc) || date.equals("") || time.equals("")))
                             || (edit && TextUtils.isEmpty(desc))) {
                         showAlertDialog(InsertActivity.this, R.string.dialog_message1);
                     }
-                    else if(!status.equals("Overdue") && Long.parseLong(date) <= c.getTimeInMillis()
+                    else if(Long.parseLong(date) <= c.getTimeInMillis()
                             && Long.parseLong(time) <= c.getTimeInMillis()){
 
                         showAlertDialog(InsertActivity.this, R.string.dialog_message);
                     }
                     else {
-
+                        //Write to database
                         mDbHelper = new TaskDbHelper(getApplicationContext());
                         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
                         ContentValues values = new ContentValues();
-                        //write to dbs
+
                         values.put(TaskContract.TaskEntry.COLUMN_NAME_DESC, desc);
                         values.put(TaskContract.TaskEntry.COLUMN_NAME_DATE, date);
                         values.put(TaskContract.TaskEntry.COLUMN_NAME_TIME, time);
                         values.put(TaskContract.TaskEntry.COLUMN_NAME_STATUS, status);
+                        values.put(TaskContract.TaskEntry.COLUMN_NAME_REMINDER, reminder);
 
                         if(edit){
                             String selection = TaskContract.TaskEntry._ID + " LIKE ?";
