@@ -18,13 +18,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-/**
- * An {@link IntentService} subclass for handling asynchronous task requests in
- * a service on a separate handler thread.
- * <p/>
- * TODO: Customize class - update intent actions, extra parameters and static
- * helper methods.
- */
+
 public class ReminderService extends IntentService {
 
     public static final String TASK = "task";
@@ -40,9 +34,6 @@ public class ReminderService extends IntentService {
                 String overdue = (String) intent.getExtras().getSerializable("overdue");
 
                 int id = Integer.parseInt(Long.toString(task.getId()));
-
-
-            Log.d("service here", task.getDesc());
 
                 Intent reminderIntent = new Intent(this, ReminderActivity.class);
                 Bundle bundle = new Bundle();

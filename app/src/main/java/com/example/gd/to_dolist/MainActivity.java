@@ -158,8 +158,6 @@ public class MainActivity extends AppCompatActivity {
 
                         adapter.notifyDataSetChanged();
 
-                        //db.delete(TaskContract.TaskEntry.TABLE_NAME, selection, selectionArgs);
-
                         Toast.makeText(getApplicationContext(), "Deleted!", Toast.LENGTH_LONG).show();
 
                         readFromDb();
@@ -355,11 +353,22 @@ public class MainActivity extends AppCompatActivity {
                     alarmManager.setRepeating(AlarmManager.RTC_WAKEUP
                             ,Long.parseLong(alarmTime)-oneHour
                             ,repeatingTime, pendingIntent);
-
-                    Log.d("pending id", Integer.toString(id));
-
                 }
                 intentArray.add(pendingIntent);
+            }
+            else if(task.getReminder() == 0){
+                int id = Integer.parseInt(Long.toString(task.getId()));
+
+                Intent alarmIntent = new Intent(getApplicationContext(), AlarmReceiver.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("task", task);
+                alarmIntent.putExtras(bundle);
+
+                PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                        this, id, alarmIntent,0);
+
+                pendingIntent.cancel();
+                alarmManager.cancel(pendingIntent);
             }
         }
 

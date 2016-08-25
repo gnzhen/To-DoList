@@ -18,7 +18,7 @@ public class TaskDbHelper extends SQLiteOpenHelper {
             TaskContract.TaskEntry.COLUMN_NAME_DESC + " TEXT," +
             TaskContract.TaskEntry.COLUMN_NAME_DATE + " TEXT," +
             TaskContract.TaskEntry.COLUMN_NAME_TIME + " TEXT," +
-            TaskContract.TaskEntry.COLUMN_NAME_STATUS + " TEXT" +
+            TaskContract.TaskEntry.COLUMN_NAME_STATUS + " TEXT," +
             TaskContract.TaskEntry.COLUMN_NAME_REMINDER + " INTEGER" + ")";
 
     public TaskDbHelper(Context context){
@@ -31,6 +31,9 @@ public class TaskDbHelper extends SQLiteOpenHelper {
 
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
         db.execSQL("DROP TABLE IF EXISTS " + TaskContract.TaskEntry.TABLE_NAME);
+        if (newVersion > oldVersion) {
+            db.execSQL("ALTER TABLE task ADD COLUMN reminder INTEGER DEFAULT 0");
+        }
         onCreate(db);
     }
 }

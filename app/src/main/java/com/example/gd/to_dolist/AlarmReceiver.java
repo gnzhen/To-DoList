@@ -22,7 +22,6 @@ public class AlarmReceiver extends BroadcastReceiver {
         {
             Task task = (Task)intent.getExtras().getSerializable("task");
             String overdue = (String)intent.getExtras().getSerializable("overdue");
-            Log.d("receiver here", task.getDesc());
 
             Intent reminderService = new Intent(context, ReminderService.class);
             Bundle bundle = new Bundle();

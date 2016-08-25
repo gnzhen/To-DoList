@@ -61,7 +61,8 @@ public class ReminderActivity extends AppCompatActivity{
                     task.setStatus("Done");
                 }
                 MainActivity mainActivity = new MainActivity();
-                mainActivity.readFromDb();
+                mainActivity.updateDatabase(task);
+
             }
         });
 
