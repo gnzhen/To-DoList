@@ -26,7 +26,11 @@
         <receiver
             android:name=".AlarmReceiver"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.example.gd.to_do_list.Task_to_do" />
+            </intent-filter>
+        </receiver>
 
         <service
             android:name=".ReminderService"

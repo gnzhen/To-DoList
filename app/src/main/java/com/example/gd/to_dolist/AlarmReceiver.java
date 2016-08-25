@@ -18,18 +18,19 @@ public class AlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        Bundle bundle1 = intent.getExtras();
-        String taskDesc = bundle1.getString("task_desc");
-        //Task task = (Task)bundle1.getSerializable("task");
-        //String overdue = (String)bundle1.getSerializable("overdue");
+        if("com.example.gd.to_do_list.Task_to_do".equals(intent.getAction()))
+        {
+            Task task = (Task)intent.getExtras().getSerializable("task");
+            String overdue = (String)intent.getExtras().getSerializable("overdue");
+            Log.d("receiver here", task.getDesc());
 
-        Intent reminderService = new Intent(context, ReminderService.class);
-        //Bundle bundle = new Bundle();
-        //bundle.putSerializable("task", task);
-        //bundle.putSerializable("overdue", overdue);
-        //reminderService.putExtras(bundle);
+            Intent reminderService = new Intent(context, ReminderService.class);
+            Bundle bundle = new Bundle();
+            bundle.putSerializable("task", task);
+            bundle.putSerializable("overdue", overdue);
+            reminderService.putExtras(bundle);
 
-        //context.startService(reminderService);
-
+            context.startService(reminderService);
+        }
     }
 }

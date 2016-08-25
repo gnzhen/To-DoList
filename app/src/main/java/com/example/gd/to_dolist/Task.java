@@ -16,7 +16,7 @@ import java.util.Date;
  */
 public class Task implements java.io.Serializable {
 
-
+    private static final long serialVersionUID = 4209360273818925922L;
     public static SimpleDateFormat dateTimeFormatter = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
     //property
     private long id;
@@ -26,7 +26,6 @@ public class Task implements java.io.Serializable {
     private String status;
 
     public Task(){}
-
     //constructor
     public Task(long id, String desc, String date, String time, String status){
         this.id = id;

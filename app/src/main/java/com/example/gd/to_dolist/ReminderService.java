@@ -34,36 +34,41 @@ public class ReminderService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
 
-        Bundle bundle1 = intent.getExtras();
-        Task task = (Task) bundle1.getSerializable(TASK);
-        //String overdue = (String)bundle1.getSerializable("overdue");
+        if (intent.getExtras().getSerializable("task") != null) {
 
-        int id = Integer.parseInt(Long.toString(task.getId()));
+                Task task = (Task) intent.getExtras().getSerializable("task");
+                String overdue = (String) intent.getExtras().getSerializable("overdue");
+                int id = Integer.parseInt(Long.toString(task.getId()));
 
-        Intent reminderIntent = new Intent(this, ReminderActivity.class);
-        Bundle bundle = new Bundle();
-        bundle.putSerializable(TASK, task);
-        //bundle.putSerializable("overdue", overdue);
-        reminderIntent.putExtras(bundle);
 
-        PendingIntent reminderPendingIntent =
-                PendingIntent.getActivity(this, id,reminderIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+            Log.d("service here", task.getDesc());
 
-        //notification addAction
-        //NotificationCompat.Action actionMarkDone = new NotificationCompat.Action.Builder(R.drawable.ic_done_white_24dp, "Mark done", pendingIntent).build();
-        //NotificationCompat.Action actionSnooze = new NotificationCompat.Action.Builder(R.drawable.ic_alarm_off_white_24dp, "Snooze", pendingIntent).build();
+                Intent reminderIntent = new Intent(this, ReminderActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable(TASK, task);
+                bundle.putSerializable("overdue", overdue);
+                reminderIntent.putExtras(bundle);
 
-        NotificationCompat.Builder nBuilder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.ic_alarm_black_24dp)
-                        .setContentTitle(task.getDesc())
-                        .setPriority(Notification.PRIORITY_MAX)
-                        .setContentText("Overdue: "  +"min");
-        //.setContentIntent(reminderPendingIntent);
-        //.addAction(actionMarkDone)
-        //.addAction(actionSnooze);
+                PendingIntent reminderPendingIntent =
+                        PendingIntent.getActivity(this, id,reminderIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        NotificationManager nManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        nManager.notify(id, nBuilder.build());
-    }
+                //notification addAction
+                //NotificationCompat.Action actionMarkDone = new NotificationCompat.Action.Builder(R.drawable.ic_done_white_24dp, "Mark done", pendingIntent).build();
+                //NotificationCompat.Action actionSnooze = new NotificationCompat.Action.Builder(R.drawable.ic_alarm_off_white_24dp, "Snooze", pendingIntent).build();
+
+                NotificationCompat.Builder nBuilder =
+                        new NotificationCompat.Builder(this)
+                                .setSmallIcon(R.drawable.ic_alarm_black_24dp)
+                                .setContentTitle(task.getDesc())
+                                .setPriority(Notification.PRIORITY_MAX)
+                                .setContentText("Overdue: "+overdue+"min")
+                                .setContentIntent(reminderPendingIntent);
+                //.addAction(actionMarkDone)
+                //.addAction(actionSnooze);
+
+                NotificationManager nManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                nManager.notify(id, nBuilder.build());
+            }
+
+        }
 }

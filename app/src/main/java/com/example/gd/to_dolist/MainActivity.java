@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     Cursor cursor;
     String sortOrder;
     TaskAdapter adapter;
+    private static final long serialVersionUID = 9103658319690261655L;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View view) {
                     Intent intent = new Intent(getApplicationContext(), InsertActivity.class);
                     Bundle args = new Bundle();
-                    args.putSerializable("EDIT", edit);
+                    args.putSerializable("edit", edit);
                     intent.putExtras(args);
                     startActivity(intent);
                 }
@@ -71,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
 
         readFromDb();
         setListView();
-        //scheduleReminder();
+        scheduleReminder();
     }
 
     @Override
@@ -203,8 +204,8 @@ public class MainActivity extends AppCompatActivity {
 
         Intent intent = new Intent(getApplicationContext(), InsertActivity.class);
         Bundle args = new Bundle();
-        args.putSerializable("TASK", task);
-        args.putSerializable("EDIT", edit);
+        args.putSerializable("task", task);
+        args.putSerializable("edit", edit);
         intent.putExtras(args);
         startActivity(intent);
     }
@@ -265,7 +266,7 @@ public class MainActivity extends AppCompatActivity {
 
             } while (cursor.moveToNext());
         }
-
+        db.close();
     }
 
     public void setListView() {
@@ -346,17 +347,28 @@ public class MainActivity extends AppCompatActivity {
             Long overdue = now - Long.parseLong(alarmTime);
             String overdueString = Long.toString((overdue / 1000) / 60);
 
-            /*
+
             Log.d("stringdatetime", stringdatetime);
             Log.d("stringnow", stringnow);
             Log.d("overdue", Long.toString(overdue));
-            Log.d("overdue min", overdueString);*/
+            Log.d("overdue min", overdueString);
 
-            Intent alarmIntent = new Intent(getApplicationContext(), AlarmReceiver.class);
+            /*if(Integer.parseInt(overdueString) > 0){
+                Intent reminderService = new Intent(this, ReminderService.class);
+                Bundle args = new Bundle();
+                args.putSerializable("task", task);
+                //bundle.putSerializable("overdue", overdue);
+                reminderService.putExtras(args);
+
+                this.startService(reminderService);
+            }*/
+
+            Intent alarmIntent = new Intent("com.example.gd.to_do_list.Task_to_do");
             Bundle bundle = new Bundle();
-            bundle.putString("task_desc",task.getDesc());
-            //bundle.putSerializable("overdue", overdueString);
+            bundle.putSerializable("task", task);
+            bundle.putSerializable("overdue", overdueString);
             alarmIntent.putExtras(bundle);
+            sendBroadcast(alarmIntent);
 
 
             int id = Integer.parseInt(Long.toString(task.getId()));
@@ -364,11 +376,12 @@ public class MainActivity extends AppCompatActivity {
                     MainActivity.this, id, alarmIntent, 0);
 
             if(!alarmTime.equals("")) {
-                alarmManager.set(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime), pendingIntent);
+                //alarmManager.set(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime), pendingIntent);
+                alarmManager.set(AlarmManager.RTC_WAKEUP, Calendar.getInstance().getTimeInMillis(), pendingIntent);
+                //long repeatingTime=15*60*1000;
+                long repeatingTime=5*10;
 
-                long repeatingTime=15*60*1000;
-
-                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime),repeatingTime, pendingIntent);
+                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, Calendar.getInstance().getTimeInMillis(),repeatingTime, pendingIntent);
 
             }
             intentArray.add(pendingIntent);

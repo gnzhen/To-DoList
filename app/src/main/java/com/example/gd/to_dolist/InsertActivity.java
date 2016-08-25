@@ -58,17 +58,17 @@ public class InsertActivity extends AppCompatActivity {
         setSupportActionBar(mToolbar);
         if(getSupportActionBar()!=null){
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setHomeAsUpIndicator(R.drawable.abc_ic_clear_mtrl_alpha);
+            getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_clear_white_24dp);
         }
 
         desc = ""; date = ""; time = "";
 
         Intent intent = getIntent();
         Bundle args = intent.getExtras();
-        edit = (Boolean)args.getSerializable("EDIT");
+        edit = (Boolean)args.getSerializable("edit");
 
         if(edit){
-            task = (Task)args.getSerializable("TASK");
+            task = (Task)args.getSerializable("task");
 
             edit_desc = (EditText) findViewById(R.id.edit_desc);
             text_date = (TextView) findViewById(R.id.text_date);
@@ -178,23 +178,6 @@ public class InsertActivity extends AppCompatActivity {
 
                     text_date = (TextView) getActivity().findViewById(R.id.text_date);
 
-                    /*pastDate = (year < c.get(Calendar.YEAR))
-                            && (month < c.get(Calendar.MONTH))
-                            && (day < c.get(Calendar.DAY_OF_MONTH));
-
-                    today = (year == c.get(Calendar.YEAR))
-                            && (month == c.get(Calendar.MONTH))
-                            && (day == c.get(Calendar.DAY_OF_MONTH));
-
-                    if(!timePickerPress)
-                        pastTime = Double.parseDouble(task.getTime())
-                                <= Double.parseDouble(Long.toString(c.getTimeInMillis()));
-
-                    if (pastDate && pastTime && !time.equals("")){
-                        showAlertDialog(getActivity(), R.string.dialog_message);
-                        text_date.setText("");
-                        date = "";
-                    }*/
                     c.set(year, month, day);
 
                     date = Long.toString(c.getTimeInMillis());
@@ -225,23 +208,6 @@ public class InsertActivity extends AppCompatActivity {
 
                             text_time = (TextView) getActivity().findViewById(R.id.text_time);
 
-                            /*pastTime = Double.parseDouble(task.getTime())
-                                    <= Double.parseDouble(Long.toString(c.getTimeInMillis()));
-
-                            if(!datePickerPress){
-                                pastDate = Double.parseDouble(task.getDate())
-                                        <= Double.parseDouble(Long.toString(c.getTimeInMillis()));
-
-                                today = (year == c.get(Calendar.YEAR))
-                                        && (month == c.get(Calendar.MONTH))
-                                        && (day == c.get(Calendar.DAY_OF_MONTH));
-                            }
-
-                            if (pastDate || today && pastTime && !date.equals("")) {
-                                showAlertDialog(getActivity(), R.string.dialog_message);
-                                text_time.setText("");
-                                time = "";
-                            } else {*/
                                 c.set(Calendar.HOUR_OF_DAY, hour);
                                 c.set(Calendar.MINUTE, minute);
 
