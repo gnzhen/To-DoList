@@ -68,26 +68,27 @@ public class InsertActivity extends AppCompatActivity {
         Bundle args = intent.getExtras();
         edit = (Boolean)args.getSerializable("edit");
 
-        if(edit){
-            task = (Task)args.getSerializable("task");
+        if (edit != null)
+            if (edit) {
+                task = (Task) args.getSerializable("task");
 
-            edit_desc = (EditText) findViewById(R.id.edit_desc);
-            text_date = (TextView) findViewById(R.id.text_date);
-            text_time = (TextView) findViewById(R.id.text_time);
+                edit_desc = (EditText) findViewById(R.id.edit_desc);
+                text_date = (TextView) findViewById(R.id.text_date);
+                text_time = (TextView) findViewById(R.id.text_time);
 
-            date = task.getDate();
-            time = task.getTime();
+                date = task.getDate();
+                time = task.getTime();
 
-            displayDate = task.convertDate();
-            displayTime = task.convertTime();
+                displayDate = task.convertDate();
+                displayTime = task.convertTime();
 
-            edit_desc.setText(task.getDesc());
-            text_date.setText(displayDate);
-            text_time.setText(displayTime);
+                edit_desc.setText(task.getDesc());
+                text_date.setText(displayDate);
+                text_time.setText(displayTime);
 
-            status = task.getStatus();
-            reminder = task.getReminder();
-        }
+                status = task.getStatus();
+                reminder = task.getReminder();
+            }
 
         FloatingActionButton fabSave = (FloatingActionButton) findViewById(R.id.fabSave);
         if (fabSave != null) {
@@ -97,11 +98,14 @@ public class InsertActivity extends AppCompatActivity {
 
                     Calendar c = Calendar.getInstance();
                     edit_desc = (EditText) findViewById(R.id.edit_desc);
-                    desc = edit_desc.getText().toString();
+                    if (edit_desc != null) {
+                        desc = edit_desc.getText().toString();
+                    }
+
+                    reminder = 1;
 
                     if(!edit){
                         status = "";
-                        reminder = 1;
                     }
 
                     if ((!edit && (TextUtils.isEmpty(desc) || date.equals("") || time.equals("")))

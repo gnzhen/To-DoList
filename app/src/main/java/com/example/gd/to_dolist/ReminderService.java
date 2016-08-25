@@ -33,9 +33,12 @@ public class ReminderService extends IntentService {
                 Task task = (Task) intent.getExtras().getSerializable("task");
                 String overdue = (String) intent.getExtras().getSerializable("overdue");
 
-                int id = Integer.parseInt(Long.toString(task.getId()));
+            int id = 0;
+            if (task != null) {
+                id = Integer.parseInt(Long.toString(task.getId()));
+            }
 
-                Intent reminderIntent = new Intent(this, ReminderActivity.class);
+            Intent reminderIntent = new Intent(this, ReminderActivity.class);
                 Bundle bundle = new Bundle();
                 bundle.putSerializable(TASK, task);
                 bundle.putSerializable("overdue", overdue);
@@ -48,15 +51,31 @@ public class ReminderService extends IntentService {
                 //NotificationCompat.Action actionMarkDone = new NotificationCompat.Action.Builder(R.drawable.ic_done_white_24dp, "Mark done", pendingIntent).build();
                 //NotificationCompat.Action actionSnooze = new NotificationCompat.Action.Builder(R.drawable.ic_alarm_off_white_24dp, "Snooze", pendingIntent).build();
 
-                NotificationCompat.Builder nBuilder =
-                        new NotificationCompat.Builder(this)
-                                .setSmallIcon(R.drawable.ic_alarm_black_24dp)
-                                .setContentTitle(task.getDesc())
-                                .setPriority(Notification.PRIORITY_MAX)
-                                .setContentText("Overdue: "+overdue+"min")
-                                .setContentIntent(reminderPendingIntent);
-                //.addAction(actionMarkDone)
-                //.addAction(actionSnooze);
+            NotificationCompat.Builder nBuilder;
+
+                if(task.checkOverdue()){
+                    nBuilder =
+                            new NotificationCompat.Builder(this)
+                                    .setAutoCancel(true)
+                                    .setSmallIcon(R.drawable.ic_alarm_black_24dp)
+                                    .setContentTitle(task.getDesc())
+                                    .setPriority(Notification.PRIORITY_MAX)
+                                    .setContentText("Overdue: "+overdue+"min")
+                                    .setContentIntent(reminderPendingIntent);
+                    //.addAction(actionMarkDone)
+                    //.addAction(actionSnooze);
+                }
+            else{
+                    nBuilder =
+                            new NotificationCompat.Builder(this)
+                                    .setAutoCancel(true)
+                                    .setSmallIcon(R.drawable.ic_alarm_black_24dp)
+                                    .setContentTitle(task.getDesc())
+                                    .setPriority(Notification.PRIORITY_MAX)
+                                    .setContentText("Time left "+ Long.toString(0-Long.parseLong(overdue))+"min")
+                                    .setContentIntent(reminderPendingIntent);
+                }
+
 
                 NotificationManager nManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
                 nManager.notify(id, nBuilder.build());

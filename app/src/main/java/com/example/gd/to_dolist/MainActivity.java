@@ -56,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
             fab.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    //start add task activity
                     Intent intent = new Intent(getApplicationContext(), InsertActivity.class);
                     Bundle args = new Bundle();
                     args.putSerializable("edit", edit);
@@ -70,9 +71,10 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
+        //refresh data changes
         readFromDb();
         setListView();
-        scheduleReminder();
+        scheduleReminder(getApplicationContext());
     }
 
     @Override
@@ -84,9 +86,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            /*case R.id.action_add_task: {
-
-            }*/
             case R.id.action_settings: {
             }
             default:
@@ -94,22 +93,27 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /*Display alert dialog while onItemLongClicked*/
     public void showFunctionDialog(Context context, Task t) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
 
         final Task task = t;
         int stringArray;
 
+        //list view various according to task.state
         if(task.getStatus().equals("Done"))
             stringArray = R.array.function_array1;
-        else if(task.getStatus().equals("Overdue"))
+        else if(task.getStatus().equals("Overdue")
+                && task.getReminder() == 1)
             stringArray = R.array.function_array3;
         else
             stringArray = R.array.function_array2;
 
+        //generate event while onListViewItemClicked
         builder.setItems(stringArray, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 switch (which){
+                    //Mark done or mark undone
                     case 0:{
                         if(task.getStatus().equals("Done")){
                             if(task.checkOverdue())
@@ -117,21 +121,25 @@ public class MainActivity extends AppCompatActivity {
                             else
                                 task.setStatus("");
                         }
-                        else
+                        else{
                             task.setStatus("Done");
+                            task.setReminder(0);
+                        }
 
-                        updateDatabase(task);
+                        updateDatabase(task, getApplicationContext());
                         readFromDb();
                         setListView();
-                        scheduleReminder();
+                        scheduleReminder(getApplicationContext());
                         break;
                     }
 
+                    //Edit, call add task activity
                     case 1:{
                         editTask(task);
                         break;
                     }
 
+                    //delete selected task
                     case 2:{
                         tasks.remove(task);
 
@@ -162,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
 
                         readFromDb();
                         setListView();
-                        scheduleReminder();
+                        scheduleReminder(getApplicationContext());
 
                         break;
                     }
@@ -174,7 +182,8 @@ public class MainActivity extends AppCompatActivity {
 
                     case 4:{
                         task.setReminder(0);
-                        scheduleReminder();
+                        updateDatabase(task, getApplicationContext());
+                        scheduleReminder(getApplicationContext());
                         break;
                     }
                 }
@@ -238,6 +247,11 @@ public class MainActivity extends AppCompatActivity {
                 reminder = cursor.getInt(cursor.getColumnIndexOrThrow
                         (TaskContract.TaskEntry.COLUMN_NAME_REMINDER));
 
+                if(status.equals("Done"))
+                    reminder = 0;
+                else
+                    reminder = 1;
+
                 Task task = new Task(id, desc, date, time, status, reminder);
 
                 displayDate = task.convertDate();
@@ -294,12 +308,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void scheduleReminder() {
+    public void scheduleReminder(Context context) {
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        ArrayList<PendingIntent> intentArray = new ArrayList<PendingIntent>();
+        ArrayList<PendingIntent> intentArray = new ArrayList<>();
 
         for(Task task: tasks){
+
+            if(task.getStatus().equals("Done")){
+                task.setReminder(0);
+                updateDatabase(task, getApplicationContext());
+            }
+
+            Log.d("task", task.getDesc());
+            Log.d("task reminder now", Integer.toString(task.getReminder()));
+
             if(task.getReminder() == 1){
                 SimpleDateFormat dateTimeFormatter = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
                 String alarmTimeString = task.convertDate() + " " + task.convertTime();
@@ -314,22 +337,11 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
-                String stringdatetime = dateTimeFormatter.format(Long.parseLong(alarmTime));
+                //calculate overdue time in minutes
                 Long now = Calendar.getInstance().getTimeInMillis();
-                String stringnow = dateTimeFormatter.format(now);
-
                 Long overdue = now - Long.parseLong(alarmTime);
                 Long overdueMinute = (overdue / 1000) / 60;
-                Long overdueHour = ((overdue / 1000)/60)/60;
-                overdueMinute -= (overdueHour*60);
-                String overdueHr = Long.toString(overdueHour);
                 String overdueMin = Long.toString(overdueMinute);
-
-                Log.d("stringdatetime", stringdatetime);
-                Log.d("stringnow", stringnow);
-                Log.d("overdue", Long.toString(overdue));
-                Log.d("overdue min", overdueMin);
-                Log.d("overdue hour", overdueHr);
 
                 Intent alarmIntent = new Intent("com.example.gd.to_do_list.Task_to_do");
                 Bundle bundle = new Bundle();
@@ -344,15 +356,12 @@ public class MainActivity extends AppCompatActivity {
                         MainActivity.this, id, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
                 if(!alarmTime.equals("")) {
-                    //alarmManager.set(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime), pendingIntent);
-                    alarmManager.set(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime), pendingIntent);
-                    //long repeatingTime=15*60*1000;
-                    long repeatingTime = 1*60*1000;
+                    long repeatingTime15min=15*60*1000;
                     long oneHour = 60*60*1000;
 
-                    alarmManager.setRepeating(AlarmManager.RTC_WAKEUP
-                            ,Long.parseLong(alarmTime)-oneHour
-                            ,repeatingTime, pendingIntent);
+                    alarmManager.set(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime)-oneHour, pendingIntent);
+                    alarmManager.set(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime)-(oneHour/2), pendingIntent);
+                    alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,Long.parseLong(alarmTime),repeatingTime15min, pendingIntent);
                 }
                 intentArray.add(pendingIntent);
             }
@@ -374,10 +383,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void updateDatabase(Task task){
-        Toast.makeText(getApplicationContext(), "Marked Done!", Toast.LENGTH_LONG).show();
+    public void updateDatabase(Task task, Context context){
+        Toast.makeText(context, "Marked Done!", Toast.LENGTH_LONG).show();
 
-        mDbHelper = new TaskDbHelper(getApplicationContext());
+        mDbHelper = new TaskDbHelper(context);
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         String selection = TaskContract.TaskEntry._ID + " LIKE ?";

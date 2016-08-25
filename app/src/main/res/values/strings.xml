@@ -31,12 +31,12 @@
         <item>Edit</item>
         <item>Delete</item>
         <item>Cancel</item>
-        <item>Snooze</item>
+        <item>Turn off reminder</item>
     </string-array>
 
     <string name="title_activity_reminder">Reminder Alarm</string>
 
     <string name="mark_done">Mark Done</string>
-    <string name="snooze">Snooze</string>
+    <string name="off_noti">Reminder Off</string>
 
 </resources>

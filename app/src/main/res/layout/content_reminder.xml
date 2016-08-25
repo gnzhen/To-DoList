@@ -42,7 +42,7 @@
         android:orientation="horizontal">
 
         <CheckBox
-            android:id="@+id/cbx_snooze"
+            android:id="@+id/cbx_offNoti"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -52,9 +52,7 @@
             android:padding="16dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/snooze"
-
-            android:drawablePadding="5dp"
+            android:text="@string/off_noti"
             android:textSize="20sp"/>
 
     </LinearLayout>
