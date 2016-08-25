@@ -51,6 +51,8 @@ public class ReminderActivity extends AppCompatActivity{
                 CheckBox cbx_snooze = (CheckBox) findViewById(R.id.cbx_snooze);
                 CheckBox cbx_markDone = (CheckBox) findViewById(R.id.cbx_markDone);
 
+                int id = Integer.parseInt(Long.toString(task.getId()));
+
                 if (cbx_snooze.isChecked()) {
                     Intent alarmIntent = new Intent(getApplicationContext(), AlarmReceiver.class);
                     Bundle bundle = new Bundle();
@@ -58,9 +60,10 @@ public class ReminderActivity extends AppCompatActivity{
                     alarmIntent.putExtras(bundle);
 
                     PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                            ReminderActivity.this, Integer.parseInt(Long.toString(task.getId())), alarmIntent,0);
+                            ReminderActivity.this, id, alarmIntent,0);
 
                     AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
+                    pendingIntent.cancel();
                     alarmManager.cancel(pendingIntent);
                 }
                 if(cbx_markDone.isChecked()){

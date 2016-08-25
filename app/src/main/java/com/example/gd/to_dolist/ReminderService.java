@@ -38,6 +38,7 @@ public class ReminderService extends IntentService {
 
                 Task task = (Task) intent.getExtras().getSerializable("task");
                 String overdue = (String) intent.getExtras().getSerializable("overdue");
+
                 int id = Integer.parseInt(Long.toString(task.getId()));
 
 

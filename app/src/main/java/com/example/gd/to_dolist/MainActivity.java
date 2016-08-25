@@ -190,6 +190,16 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     case 4:{
+                        Intent alarmIntent = new Intent(getApplicationContext(), AlarmReceiver.class);
+                        Bundle bundle = new Bundle();
+                        bundle.putSerializable("task", task);
+                        alarmIntent.putExtras(bundle);
+
+                        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                                MainActivity.this, Integer.parseInt(Long.toString(task.getId())), alarmIntent,0);
+
+                        AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
+                        alarmManager.cancel(pendingIntent);
                         break;
                     }
                 }
@@ -339,7 +349,6 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-
             String stringdatetime = dateTimeFormatter.format(Long.parseLong(alarmTime));
             Long now = Calendar.getInstance().getTimeInMillis();
             String stringnow = dateTimeFormatter.format(now);
@@ -347,21 +356,10 @@ public class MainActivity extends AppCompatActivity {
             Long overdue = now - Long.parseLong(alarmTime);
             String overdueString = Long.toString((overdue / 1000) / 60);
 
-
             Log.d("stringdatetime", stringdatetime);
             Log.d("stringnow", stringnow);
             Log.d("overdue", Long.toString(overdue));
             Log.d("overdue min", overdueString);
-
-            /*if(Integer.parseInt(overdueString) > 0){
-                Intent reminderService = new Intent(this, ReminderService.class);
-                Bundle args = new Bundle();
-                args.putSerializable("task", task);
-                //bundle.putSerializable("overdue", overdue);
-                reminderService.putExtras(args);
-
-                this.startService(reminderService);
-            }*/
 
             Intent alarmIntent = new Intent("com.example.gd.to_do_list.Task_to_do");
             Bundle bundle = new Bundle();
@@ -373,7 +371,7 @@ public class MainActivity extends AppCompatActivity {
 
             int id = Integer.parseInt(Long.toString(task.getId()));
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                    MainActivity.this, id, alarmIntent, 0);
+                    MainActivity.this, id, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
             if(!alarmTime.equals("")) {
                 //alarmManager.set(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime), pendingIntent);
@@ -382,6 +380,8 @@ public class MainActivity extends AppCompatActivity {
                 long repeatingTime=5*10;
 
                 alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, Calendar.getInstance().getTimeInMillis(),repeatingTime, pendingIntent);
+
+                Log.d("pending id", Integer.toString(pendingIntent.getCreatorUid()));
 
             }
             intentArray.add(pendingIntent);
