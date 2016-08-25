@@ -1,7 +1,8 @@
 package com.example.gd.to_dolist;
 
-import android.app.Dialog;
-import android.app.DialogFragment;
+import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -9,28 +10,24 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text. DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 
@@ -63,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
                     args.putSerializable("EDIT", edit);
                     intent.putExtras(args);
                     startActivity(intent);
-
                 }
             });
         }
@@ -73,6 +69,147 @@ public class MainActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
+        readFromDb();
+        setListView();
+        scheduleReminder();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            /*case R.id.action_add_task: {
+
+            }*/
+            case R.id.action_settings: {
+            }
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    public void showFunctionDialog(Context context, Task t) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+
+        final Task task = t;
+        int stringArray;
+
+        if(task.getStatus().equals("Done"))
+            stringArray = R.array.function_array1;
+        else if(task.getStatus().equals("Overdue"))
+            stringArray = R.array.function_array3;
+        else
+            stringArray = R.array.function_array2;
+
+        builder.setItems(stringArray, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                switch (which){
+                    case 0:{
+                        if(task.getStatus().equals("Done")){
+                            if(task.checkOverdue())
+                                task.setStatus("Overdue");
+                            else
+                                task.setStatus("");
+                        }
+                        else
+                            task.setStatus("Done");
+
+                        Toast.makeText(getApplicationContext(), "Marked Done!", Toast.LENGTH_LONG).show();
+
+                        mDbHelper = new TaskDbHelper(getApplicationContext());
+                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+                        String selection = TaskContract.TaskEntry._ID + " LIKE ?";
+                        String[] selectionArgs = { String.valueOf(Long.toString(task.getId())) };
+
+                        ContentValues values = new ContentValues();
+                        values.put(TaskContract.TaskEntry.COLUMN_NAME_DESC, task.getDesc());
+                        values.put(TaskContract.TaskEntry.COLUMN_NAME_DATE, task.getDate());
+                        values.put(TaskContract.TaskEntry.COLUMN_NAME_TIME, task.getTime());
+                        values.put(TaskContract.TaskEntry.COLUMN_NAME_STATUS, task.getStatus());
+
+                        int count = db.update(
+                                TaskContract.TaskEntry.TABLE_NAME,
+                                values,
+                                selection,
+                                selectionArgs);
+
+                        readFromDb();
+                        setListView();
+                        break;
+                    }
+
+                    case 1:{
+                        editTask(task);
+                        break;
+                    }
+
+                    case 2:{
+                        mDbHelper = new TaskDbHelper(getApplicationContext());
+                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+                        tasks.remove(task);
+
+                        //getApplicationContext().deleteDatabase("task.db");
+                        db.delete(TaskContract.TaskEntry.TABLE_NAME, null, null);
+
+                        ContentValues values = new ContentValues();
+
+                        Collections.reverse(tasks);
+
+                        for(Task t: tasks){
+                            values.put(TaskContract.TaskEntry.COLUMN_NAME_DESC, t.getDesc());
+                            values.put(TaskContract.TaskEntry.COLUMN_NAME_DATE, t.getDate());
+                            values.put(TaskContract.TaskEntry.COLUMN_NAME_TIME, t.getTime());
+                            values.put(TaskContract.TaskEntry.COLUMN_NAME_STATUS, t.getStatus());
+
+                            long id = db.insert(TaskContract.TaskEntry.TABLE_NAME, null, values);
+                        }
+
+                        adapter.notifyDataSetChanged();
+
+                        //db.delete(TaskContract.TaskEntry.TABLE_NAME, selection, selectionArgs);
+
+                        Toast.makeText(getApplicationContext(), "Deleted!", Toast.LENGTH_LONG).show();
+
+                        readFromDb();
+                        setListView();
+
+                        break;
+                    }
+
+                    case 3:{
+                        dialog.dismiss();
+                        break;
+                    }
+
+                    case 4:{
+                        break;
+                    }
+                }
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    public void editTask(Task task) {
+        edit = true;
+
+        Intent intent = new Intent(getApplicationContext(), InsertActivity.class);
+        Bundle args = new Bundle();
+        args.putSerializable("TASK", task);
+        args.putSerializable("EDIT", edit);
+        intent.putExtras(args);
+        startActivity(intent);
+    }
+
+    public void readFromDb(){
         mDbHelper = new TaskDbHelper(this);
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
@@ -114,10 +251,8 @@ public class MainActivity extends AppCompatActivity {
 
                 Task task = new Task(id, desc, date, time, status);
 
-                SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
-                SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm a");
-                displayDate = dateFormatter.format(Long.parseLong(date));
-                displayTime = timeFormatter.format(Long.parseLong(time));
+                displayDate = task.convertDate();
+                displayTime = task.convertTime();
 
                 if(!status.equals("Done")){
                     if(task.checkOverdue())
@@ -131,7 +266,11 @@ public class MainActivity extends AppCompatActivity {
             } while (cursor.moveToNext());
         }
 
+    }
+
+    public void setListView() {
         adapter = new TaskAdapter(this, 0, tasks);
+
         listView = (ListView) findViewById(R.id.list_view);
         if (adapter.getCount() != 0) {
             listView.post(new Runnable() {
@@ -147,6 +286,13 @@ public class MainActivity extends AppCompatActivity {
                 public void onItemClick(AdapterView<?> adapterView, View view, int pos, long id) {
 
                     Task task = adapter.getItem(pos);
+
+                    /*
+                    Intent reminderService = new Intent(getApplicationContext(), ReminderService.class);
+                    Bundle bundle = new Bundle();
+                    bundle.putSerializable("task", task);
+                    reminderService.putExtras(bundle);
+                    getApplicationContext().startService(reminderService);*/
 
                     editTask(task);
                 }
@@ -166,135 +312,70 @@ public class MainActivity extends AppCompatActivity {
 
                     return true;
                 }
+
             });
-
-
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            /*case R.id.action_add_task: {
+    private void scheduleReminder() {
 
-            }*/
-            case R.id.action_settings: {
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        ArrayList<PendingIntent> intentArray = new ArrayList<PendingIntent>();
+
+        for(Task task: tasks){
+            SimpleDateFormat dateTimeFormatter = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
+            String alarmTimeString = task.convertDate() + " " + task.convertTime();
+
+            //Log.d("alarmTimeString", alarmTimeString);
+            String alarmTime = "";
+
+            try {
+                Date date = dateTimeFormatter.parse(alarmTimeString);
+                alarmTime = Long.toString(date.getTime());
+
+            } catch (ParseException e) {
+                e.printStackTrace();
             }
-            default:
-                return super.onOptionsItemSelected(item);
+
+
+            String stringdatetime = dateTimeFormatter.format(Long.parseLong(alarmTime));
+            Log.d("stringdatetime", stringdatetime);
+            Long now = Calendar.getInstance().getTimeInMillis();
+            String stringnow = dateTimeFormatter.format(now);
+            Log.d("stringnow", stringnow);
+
+            Long overdue = now - Long.parseLong(alarmTime);
+            Log.d("overdue", Long.toString(overdue));
+            String overdueString = Long.toString((overdue / 1000) / 60);
+            Log.d("overdue min", overdueString);
+
+            Intent alarmIntent = new Intent(getApplicationContext(), AlarmReceiver.class);
+            Bundle bundle = new Bundle();
+            bundle.putSerializable("task", task);
+            bundle.putSerializable("overdue", overdue);
+            alarmIntent.putExtras(bundle);
+
+
+            int id = Integer.parseInt(Long.toString(task.getId()));
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                    MainActivity.this,
+                    id,
+                    alarmIntent,
+                    0);
+
+            if(!alarmTime.equals("")) {
+                alarmManager.set(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime), pendingIntent);
+
+                long repeatingTime=15*60*1000;
+
+                alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime),repeatingTime, pendingIntent);
+
+            }
+
+            intentArray.add(pendingIntent);
         }
-    }
 
-    public void showFunctionDialog(Context context, Task t) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-
-        final Task task = t;
-        int stringArray;
-
-        if(task.getStatus().equals("Done"))
-            stringArray = R.array.function_array1;
-        else
-            stringArray = R.array.function_array2;
-
-        builder.setItems(stringArray, new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int which) {
-                switch (which){
-                    case 0:{
-                        if(task.getStatus().equals("Done")){
-                            if(task.checkOverdue())
-                                task.setStatus("Overdue");
-                            else
-                                task.setStatus("");
-                        }
-                        else
-                            task.setStatus("Done");
-
-                        Toast.makeText(getApplicationContext(), "Marked Done!", Toast.LENGTH_LONG).show();
-
-                        mDbHelper = new TaskDbHelper(getApplicationContext());
-                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-                        String selection = TaskContract.TaskEntry._ID + " LIKE ?";
-                        String[] selectionArgs = { String.valueOf(Long.toString(task.getId())) };
-
-                        ContentValues values = new ContentValues();
-                        values.put(TaskContract.TaskEntry.COLUMN_NAME_DESC, task.getDesc());
-                        values.put(TaskContract.TaskEntry.COLUMN_NAME_DATE, task.getDate());
-                        values.put(TaskContract.TaskEntry.COLUMN_NAME_TIME, task.getTime());
-                        values.put(TaskContract.TaskEntry.COLUMN_NAME_STATUS, task.getStatus());
-
-                        int count = db.update(
-                                TaskContract.TaskEntry.TABLE_NAME,
-                                values,
-                                selection,
-                                selectionArgs);
-
-                        onResume();
-                        break;
-                    }
-
-                    case 1:{
-                        editTask(task);
-                        break;
-                    }
-
-                    case 2:{
-                        mDbHelper = new TaskDbHelper(getApplicationContext());
-                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-                        tasks.remove(task);
-
-                        //getApplicationContext().deleteDatabase("task.db");
-                        db.delete(TaskContract.TaskEntry.TABLE_NAME, null, null);
-
-                        ContentValues values = new ContentValues();
-
-                        Collections.reverse(tasks);
-
-                        for(Task t: tasks){
-                            values.put(TaskContract.TaskEntry.COLUMN_NAME_DESC, t.getDesc());
-                            values.put(TaskContract.TaskEntry.COLUMN_NAME_DATE, t.getDate());
-                            values.put(TaskContract.TaskEntry.COLUMN_NAME_TIME, t.getTime());
-                            values.put(TaskContract.TaskEntry.COLUMN_NAME_STATUS, t.getStatus());
-
-                            long id = db.insert(TaskContract.TaskEntry.TABLE_NAME, null, values);
-                        }
-
-                        adapter.notifyDataSetChanged();
-                        onResume();
-
-                        //db.delete(TaskContract.TaskEntry.TABLE_NAME, selection, selectionArgs);
-
-                        Toast.makeText(getApplicationContext(), "Deleted!", Toast.LENGTH_LONG).show();
-
-                        break;
-                    }
-
-                    case 3:
-                        dialog.dismiss();
-                        onResume();
-                }
-            }
-        });
-        AlertDialog dialog = builder.create();
-        dialog.show();
-    }
-
-    public void editTask(Task task) {
-        edit = true;
-
-        Intent intent = new Intent(getApplicationContext(), InsertActivity.class);
-        Bundle args = new Bundle();
-        args.putSerializable("TASK", task);
-        args.putSerializable("EDIT", edit);
-        intent.putExtras(args);
-        startActivity(intent);
     }
 }
 

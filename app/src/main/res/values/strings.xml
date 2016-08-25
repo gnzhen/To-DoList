@@ -26,4 +26,17 @@
         <item>Cancel</item>
     </string-array>
 
+    <string-array name="function_array3">
+        <item>Mark Done</item>
+        <item>Edit</item>
+        <item>Delete</item>
+        <item>Cancel</item>
+        <item>Snooze</item>
+    </string-array>
+
+    <string name="title_activity_reminder">Reminder Alarm</string>
+
+    <string name="mark_done">Mark Done</string>
+    <string name="snooze">Snooze</string>
+
 </resources>

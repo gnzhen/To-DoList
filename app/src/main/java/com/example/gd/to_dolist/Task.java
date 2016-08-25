@@ -1,5 +1,7 @@
 package com.example.gd.to_dolist;
 
+import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import java.io.Serializable;
@@ -56,11 +58,23 @@ public class Task implements java.io.Serializable {
         this.status = status;
     }
 
+
     public boolean checkOverdue() {
         Calendar c = Calendar.getInstance();
         Long time_now = c.getTimeInMillis();
 
         return (Double.parseDouble(time) < Double.parseDouble(Long.toString(time_now))
                 && Double.parseDouble(date) <= Double.parseDouble(Long.toString(time_now)));
+    }
+
+    public String convertDate(){
+        SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
+        return dateFormatter.format(Long.parseLong(date));
+    }
+
+    public String convertTime()
+    {
+        SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm a");
+        return timeFormatter.format(Long.parseLong(time));
     }
 }

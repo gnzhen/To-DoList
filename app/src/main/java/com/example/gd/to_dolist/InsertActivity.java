@@ -45,8 +45,6 @@ public class InsertActivity extends AppCompatActivity {
     public static TextView text_date;
     public static EditText edit_desc;
 
-    public static SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
-    public static SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm a");
     public static Date convertedDate = new Date();
     public static Date convertedTime = new Date();
     public static Task task;
@@ -79,8 +77,8 @@ public class InsertActivity extends AppCompatActivity {
             date = task.getDate();
             time = task.getTime();
 
-            displayDate = dateFormatter.format(Long.parseLong(date));
-            displayTime = timeFormatter.format(Long.parseLong(time));
+            displayDate = task.convertDate();
+            displayTime = task.convertTime();
 
             edit_desc.setText(task.getDesc());
             text_date.setText(displayDate);
@@ -201,6 +199,7 @@ public class InsertActivity extends AppCompatActivity {
 
                     date = Long.toString(c.getTimeInMillis());
 
+                    SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
                     text_date.setText(dateFormatter.format(Long.parseLong(date)));
                 }
             },year, month, day);
@@ -248,6 +247,7 @@ public class InsertActivity extends AppCompatActivity {
 
                                 time = Long.toString(c.getTimeInMillis());
 
+                                SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm a");
                                 text_time.setText(timeFormatter.format(Long.parseLong(time)));
                         }
                     }, hour, minute, DateFormat.is24HourFormat(getActivity()));
