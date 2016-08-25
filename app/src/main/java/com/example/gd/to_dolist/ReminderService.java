@@ -36,14 +36,14 @@ public class ReminderService extends IntentService {
 
         Bundle bundle1 = intent.getExtras();
         Task task = (Task) bundle1.getSerializable(TASK);
-        String overdue = (String)bundle1.getSerializable("overdue");
+        //String overdue = (String)bundle1.getSerializable("overdue");
 
         int id = Integer.parseInt(Long.toString(task.getId()));
 
         Intent reminderIntent = new Intent(this, ReminderActivity.class);
         Bundle bundle = new Bundle();
         bundle.putSerializable(TASK, task);
-        bundle.putSerializable("overdue", overdue);
+        //bundle.putSerializable("overdue", overdue);
         reminderIntent.putExtras(bundle);
 
         PendingIntent reminderPendingIntent =
@@ -58,8 +58,8 @@ public class ReminderService extends IntentService {
                         .setSmallIcon(R.drawable.ic_alarm_black_24dp)
                         .setContentTitle(task.getDesc())
                         .setPriority(Notification.PRIORITY_MAX)
-                        .setContentText("Overdue: " + overdue +"min")
-                        .setContentIntent(reminderPendingIntent);
+                        .setContentText("Overdue: "  +"min");
+        //.setContentIntent(reminderPendingIntent);
         //.addAction(actionMarkDone)
         //.addAction(actionSnooze);
 

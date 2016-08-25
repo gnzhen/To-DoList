@@ -19,7 +19,9 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-public class ReminderActivity extends AppCompatActivity {
+public class ReminderActivity extends AppCompatActivity{
+    Task task;
+    String overdue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,8 +32,8 @@ public class ReminderActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         Bundle bundle = intent.getExtras();
-        final Task task = (Task)bundle.getSerializable("task");
-        final String overdue = (String)bundle.getSerializable("overdue");
+        task = (Task)bundle.getSerializable("task");
+        overdue = (String)bundle.getSerializable("overdue");
 
         TextView text_desc = (TextView)findViewById(R.id.text_desc);
         TextView text_dateTime = (TextView)findViewById(R.id.text_dateTime);

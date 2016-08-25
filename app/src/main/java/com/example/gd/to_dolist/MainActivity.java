@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
 
         readFromDb();
         setListView();
-        scheduleReminder();
+        //scheduleReminder();
     }
 
     @Override
@@ -340,29 +340,28 @@ public class MainActivity extends AppCompatActivity {
 
 
             String stringdatetime = dateTimeFormatter.format(Long.parseLong(alarmTime));
-            Log.d("stringdatetime", stringdatetime);
             Long now = Calendar.getInstance().getTimeInMillis();
             String stringnow = dateTimeFormatter.format(now);
-            Log.d("stringnow", stringnow);
 
             Long overdue = now - Long.parseLong(alarmTime);
-            Log.d("overdue", Long.toString(overdue));
             String overdueString = Long.toString((overdue / 1000) / 60);
-            Log.d("overdue min", overdueString);
+
+            /*
+            Log.d("stringdatetime", stringdatetime);
+            Log.d("stringnow", stringnow);
+            Log.d("overdue", Long.toString(overdue));
+            Log.d("overdue min", overdueString);*/
 
             Intent alarmIntent = new Intent(getApplicationContext(), AlarmReceiver.class);
             Bundle bundle = new Bundle();
-            bundle.putSerializable("task", task);
-            bundle.putSerializable("overdue", overdue);
+            bundle.putString("task_desc",task.getDesc());
+            //bundle.putSerializable("overdue", overdueString);
             alarmIntent.putExtras(bundle);
 
 
             int id = Integer.parseInt(Long.toString(task.getId()));
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                    MainActivity.this,
-                    id,
-                    alarmIntent,
-                    0);
+                    MainActivity.this, id, alarmIntent, 0);
 
             if(!alarmTime.equals("")) {
                 alarmManager.set(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime), pendingIntent);
@@ -372,7 +371,6 @@ public class MainActivity extends AppCompatActivity {
                 alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime),repeatingTime, pendingIntent);
 
             }
-
             intentArray.add(pendingIntent);
         }
 

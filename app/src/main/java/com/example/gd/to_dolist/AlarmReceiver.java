@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import java.io.Serializable;
 
 public class AlarmReceiver extends BroadcastReceiver {
 
@@ -17,16 +18,18 @@ public class AlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        Task task = (Task)intent.getExtras().getSerializable("task");
-        String overdue = (String)intent.getExtras().getSerializable("overdue");
+        Bundle bundle1 = intent.getExtras();
+        String taskDesc = bundle1.getString("task_desc");
+        //Task task = (Task)bundle1.getSerializable("task");
+        //String overdue = (String)bundle1.getSerializable("overdue");
 
         Intent reminderService = new Intent(context, ReminderService.class);
-        Bundle bundle = new Bundle();
-        bundle.putSerializable("task", task);
-        bundle.putSerializable("overdue", overdue);
-        reminderService.putExtras(bundle);
+        //Bundle bundle = new Bundle();
+        //bundle.putSerializable("task", task);
+        //bundle.putSerializable("overdue", overdue);
+        //reminderService.putExtras(bundle);
 
-        context.startService(reminderService);
+        //context.startService(reminderService);
 
     }
 }

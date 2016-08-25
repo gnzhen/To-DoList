@@ -22,10 +22,6 @@
             android:name=".InsertActivity"
             android:label="@string/title_activity_insert"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".ReminderActivity"
-            android:label="@string/title_activity_reminder"
-            android:theme="@style/AppTheme.NoActionBar" />
 
         <receiver
             android:name=".AlarmReceiver"
@@ -35,6 +31,11 @@
         <service
             android:name=".ReminderService"
             android:exported="false" />
+
+        <activity
+            android:name=".ReminderActivity"
+            android:label="@string/title_activity_reminder"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>
