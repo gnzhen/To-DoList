@@ -66,9 +66,11 @@ public class InsertActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         Bundle args = intent.getExtras();
+        //true - edit previous task; false - add a new task
         edit = (Boolean)args.getSerializable("edit");
 
         if (edit != null)
+            //set previous data into view
             if (edit) {
                 task = (Task) args.getSerializable("task");
 
@@ -98,27 +100,30 @@ public class InsertActivity extends AppCompatActivity {
 
                     Calendar c = Calendar.getInstance();
                     edit_desc = (EditText) findViewById(R.id.edit_desc);
+
+                    //get task description
                     if (edit_desc != null) {
                         desc = edit_desc.getText().toString();
                     }
-
+                    //initialize reminder on
                     reminder = 1;
 
+                    //initialize status:default
                     if(!edit){
                         status = "";
                     }
 
+                    //pop out alert if data not key in completely
                     if ((!edit && (TextUtils.isEmpty(desc) || date.equals("") || time.equals("")))
                             || (edit && TextUtils.isEmpty(desc))) {
                         showAlertDialog(InsertActivity.this, R.string.dialog_message1);
                     }
+                    //pop out alert if a past time is choosen
                     else if(Long.parseLong(date) <= c.getTimeInMillis()
                             && Long.parseLong(time) <= c.getTimeInMillis()){
-
                         showAlertDialog(InsertActivity.this, R.string.dialog_message);
                     }
                     else {
-                        //Write to database
                         mDbHelper = new TaskDbHelper(getApplicationContext());
                         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
@@ -130,6 +135,7 @@ public class InsertActivity extends AppCompatActivity {
                         values.put(TaskContract.TaskEntry.COLUMN_NAME_STATUS, status);
                         values.put(TaskContract.TaskEntry.COLUMN_NAME_REMINDER, reminder);
 
+                        //update task in dbs
                         if(edit){
                             String selection = TaskContract.TaskEntry._ID + " LIKE ?";
                             String[] selectionArgs = { String.valueOf(Long.toString(task.getId())) };
@@ -140,8 +146,8 @@ public class InsertActivity extends AppCompatActivity {
                                     selection,
                                     selectionArgs);
                         }
+                        //insert new task into dbs
                         else{
-                            //insert new row to dbs
                             long id = db.insert(TaskContract.TaskEntry.TABLE_NAME, null, values);
                         }
                         Toast.makeText(getApplicationContext(), "Saved!", Toast.LENGTH_LONG).show();
@@ -227,7 +233,7 @@ public class InsertActivity extends AppCompatActivity {
                         }
                     }, hour, minute, DateFormat.is24HourFormat(getActivity()));
 
-            timePickerDialog.updateTime(0, 0);
+            timePickerDialog.updateTime(0, 0); //clock pointer always point to 12
 
             return timePickerDialog;
         }

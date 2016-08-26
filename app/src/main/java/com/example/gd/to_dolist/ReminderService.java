@@ -30,14 +30,15 @@ public class ReminderService extends IntentService {
 
         if (intent.getExtras().getSerializable("task") != null) {
 
-                Task task = (Task) intent.getExtras().getSerializable("task");
-                String overdue = (String) intent.getExtras().getSerializable("overdue");
+            Task task = (Task) intent.getExtras().getSerializable("task");
+            String overdue = (String) intent.getExtras().getSerializable("overdue");
 
             int id = 0;
             if (task != null) {
                 id = Integer.parseInt(Long.toString(task.getId()));
             }
 
+            //display reminderActivity when noti bar is clicked
             Intent reminderIntent = new Intent(this, ReminderActivity.class);
                 Bundle bundle = new Bundle();
                 bundle.putSerializable(TASK, task);
@@ -53,18 +54,20 @@ public class ReminderService extends IntentService {
 
             NotificationCompat.Builder nBuilder;
 
-                if(task.checkOverdue()){
-                    nBuilder =
-                            new NotificationCompat.Builder(this)
-                                    .setAutoCancel(true)
-                                    .setSmallIcon(R.drawable.ic_alarm_black_24dp)
-                                    .setContentTitle(task.getDesc())
-                                    .setPriority(Notification.PRIORITY_MAX)
-                                    .setContentText("Overdue: "+overdue+"min")
-                                    .setContentIntent(reminderPendingIntent);
-                    //.addAction(actionMarkDone)
-                    //.addAction(actionSnooze);
-                }
+            //for overdue task
+            if(task.checkOverdue()){
+                nBuilder =
+                        new NotificationCompat.Builder(this)
+                                .setAutoCancel(true)
+                                .setSmallIcon(R.drawable.ic_alarm_black_24dp)
+                                .setContentTitle(task.getDesc())
+                                .setPriority(Notification.PRIORITY_MAX)
+                                .setContentText("Overdue: "+overdue+"min")
+                                .setContentIntent(reminderPendingIntent);
+                //.addAction(actionMarkDone)
+                //.addAction(actionSnooze);
+            }
+            //for not overdue task
             else{
                     nBuilder =
                             new NotificationCompat.Builder(this)

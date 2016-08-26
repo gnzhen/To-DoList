@@ -25,6 +25,8 @@ import java.util.Date;
 public class ReminderActivity extends AppCompatActivity{
     Task task;
     String overdue;
+    CheckBox cbx_markDone;
+    CheckBox cbx_offNoti;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,12 +45,13 @@ public class ReminderActivity extends AppCompatActivity{
         if (text_desc != null) {
             text_desc.setText(task.getDesc());
         }
+        //display task overdue time in minutes
         if (text_dateTime != null) {
             text_dateTime.setText("Overdue for " +  overdue + "minutes");
         }
 
-        CheckBox cbx_markDone = (CheckBox)findViewById(R.id.cbx_markDone);
-        CheckBox cbx_offNoti = (CheckBox)findViewById(R.id.cbx_offNoti);
+        cbx_markDone = (CheckBox)findViewById(R.id.cbx_markDone);
+        cbx_offNoti = (CheckBox)findViewById(R.id.cbx_offNoti);
 
         if(task.getStatus().equals("Done"))
             if (cbx_markDone != null) {
@@ -59,8 +62,6 @@ public class ReminderActivity extends AppCompatActivity{
                 cbx_offNoti.setChecked(true);
             }
 
-        Log.d("reminder", Integer.toString(task.getReminder()));
-
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_reminder);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -68,20 +69,24 @@ public class ReminderActivity extends AppCompatActivity{
                 Toast.makeText(getApplicationContext(), "Saved!", Toast.LENGTH_LONG).show();
                 finish();
 
-                CheckBox cbx_offNoti= (CheckBox) findViewById(R.id.cbx_offNoti);
-                CheckBox cbx_markDone = (CheckBox) findViewById(R.id.cbx_markDone);
-
                 int id = Integer.parseInt(Long.toString(task.getId()));
 
+                //turn off reminder
                 if (cbx_offNoti != null && cbx_offNoti.isChecked()) {
                     task.setReminder(0);
                 }
+                //set task done & turn off reminder
                 if (cbx_markDone != null && cbx_markDone.isChecked()) {
                     task.setStatus("Done");
                     task.setReminder(0);
                 }
                 MainActivity mainActivity = new MainActivity();
                 mainActivity.updateDatabase(task, ReminderActivity.this);
+                Intent intent = new Intent(ReminderActivity.this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                //mainActivity.readFromDb(ReminderActivity.this);
+                //mainActivity.scheduleReminder(ReminderActivity.this);
             }
         });
 

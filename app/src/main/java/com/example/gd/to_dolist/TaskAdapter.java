@@ -37,6 +37,7 @@ public class TaskAdapter extends ArrayAdapter {
 
         Task itemTask = new Task();
 
+        //task added will placed on the top of list
         for(Task task: tasks){
             if (Long.toString(task.getId()).equals(Integer.toString(getCount() - position)))
                 itemTask = task;

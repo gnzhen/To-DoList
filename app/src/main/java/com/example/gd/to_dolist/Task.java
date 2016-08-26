@@ -16,14 +16,13 @@ import java.util.Date;
  */
 public class Task implements java.io.Serializable {
 
-    public static SimpleDateFormat dateTimeFormatter = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
     //property
-    private long id;
-    private String desc;
-    private String date;
-    private String time;
-    private String status;
-    private int reminder;
+    private long id;        //task id
+    private String desc;    //task description
+    private String date;    //task duedate
+    private String time;    //task duetime
+    private String status;  //done/overdue/normal("")
+    private int reminder;   //reminder on-1/off-0
 
     public Task(){}
     //constructor
@@ -60,7 +59,7 @@ public class Task implements java.io.Serializable {
     }
     public void setReminder(int reminder) {this.reminder = reminder;}
 
-
+    //return true if task overdue
     public boolean checkOverdue() {
         Calendar c = Calendar.getInstance();
         Long time_now = c.getTimeInMillis();
@@ -69,11 +68,13 @@ public class Task implements java.io.Serializable {
                 && Double.parseDouble(date) <= Double.parseDouble(Long.toString(time_now)));
     }
 
+    //convert millisecond to displayable date
     public String convertDate(){
         SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yyyy");
         return dateFormatter.format(Long.parseLong(date));
     }
 
+    //convert millisecond to displayable time
     public String convertTime()
     {
         SimpleDateFormat timeFormatter = new SimpleDateFormat("hh:mm a");

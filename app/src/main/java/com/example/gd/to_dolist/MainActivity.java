@@ -34,6 +34,7 @@ import java.util.Date;
 public class MainActivity extends AppCompatActivity {
 
     private static TaskDbHelper mDbHelper;
+    private static SQLiteDatabase db;
     ArrayList<Task> tasks;
     Boolean edit = false;
     String desc, date, time, status, displayDate, displayTime;
@@ -72,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         //refresh data changes
-        readFromDb();
+        readFromDb(getApplicationContext());
         setListView();
         scheduleReminder(getApplicationContext());
     }
@@ -120,16 +121,20 @@ public class MainActivity extends AppCompatActivity {
                                 task.setStatus("Overdue");
                             else
                                 task.setStatus("");
+
+                            Toast.makeText(getApplicationContext(), "Marked Undone!", Toast.LENGTH_LONG).show();
                         }
                         else{
                             task.setStatus("Done");
-                            task.setReminder(0);
+                            task.setReminder(0); //set reminder off for done task
+                            Toast.makeText(getApplicationContext(), "Marked Done!", Toast.LENGTH_LONG).show();
                         }
 
                         updateDatabase(task, getApplicationContext());
-                        readFromDb();
+                        readFromDb(getApplicationContext());
                         setListView();
                         scheduleReminder(getApplicationContext());
+
                         break;
                     }
 
@@ -146,7 +151,6 @@ public class MainActivity extends AppCompatActivity {
                         mDbHelper = new TaskDbHelper(getApplicationContext());
                         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
-                        //getApplicationContext().deleteDatabase("task.db");
                         db.delete(TaskContract.TaskEntry.TABLE_NAME, null, null);
 
                         ContentValues values = new ContentValues();
@@ -168,21 +172,23 @@ public class MainActivity extends AppCompatActivity {
 
                         Toast.makeText(getApplicationContext(), "Deleted!", Toast.LENGTH_LONG).show();
 
-                        readFromDb();
+                        readFromDb(getApplicationContext());
                         setListView();
                         scheduleReminder(getApplicationContext());
 
                         break;
                     }
 
+                    //cancel
                     case 3:{
                         dialog.dismiss();
                         break;
                     }
-
+                    //turn off reminder
                     case 4:{
                         task.setReminder(0);
                         updateDatabase(task, getApplicationContext());
+                        readFromDb(getApplicationContext());
                         scheduleReminder(getApplicationContext());
                         break;
                     }
@@ -193,6 +199,7 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    //to change data of a created task
     public void editTask(Task task) {
         edit = true;
 
@@ -204,9 +211,10 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    public void readFromDb(){
+    //write database data to arraylist 'tasks'
+    public void readFromDb(Context context){
         mDbHelper = new TaskDbHelper(this);
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+        db = mDbHelper.getReadableDatabase();
 
         tasks = new ArrayList<>();
         edit = false;
@@ -247,12 +255,14 @@ public class MainActivity extends AppCompatActivity {
                 reminder = cursor.getInt(cursor.getColumnIndexOrThrow
                         (TaskContract.TaskEntry.COLUMN_NAME_REMINDER));
 
+                //0-reminder off, 1-reminder on
                 if(status.equals("Done"))
                     reminder = 0;
                 else
                     reminder = 1;
 
                 Task task = new Task(id, desc, date, time, status, reminder);
+
 
                 displayDate = task.convertDate();
                 displayTime = task.convertTime();
@@ -308,6 +318,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //arrange notification
     public void scheduleReminder(Context context) {
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
@@ -315,14 +326,13 @@ public class MainActivity extends AppCompatActivity {
 
         for(Task task: tasks){
 
+            //set reminder off for done task
             if(task.getStatus().equals("Done")){
                 task.setReminder(0);
-                updateDatabase(task, getApplicationContext());
+                updateDatabase(task, context);
             }
 
-            Log.d("task", task.getDesc());
-            Log.d("task reminder now", Integer.toString(task.getReminder()));
-
+            //schedule reminder for task
             if(task.getReminder() == 1){
                 SimpleDateFormat dateTimeFormatter = new SimpleDateFormat("dd/MM/yyyy hh:mm a");
                 String alarmTimeString = task.convertDate() + " " + task.convertTime();
@@ -343,6 +353,7 @@ public class MainActivity extends AppCompatActivity {
                 Long overdueMinute = (overdue / 1000) / 60;
                 String overdueMin = Long.toString(overdueMinute);
 
+                //to broadcast receiver
                 Intent alarmIntent = new Intent("com.example.gd.to_do_list.Task_to_do");
                 Bundle bundle = new Bundle();
                 bundle.putSerializable("task", task);
@@ -350,8 +361,9 @@ public class MainActivity extends AppCompatActivity {
                 alarmIntent.putExtras(bundle);
                 sendBroadcast(alarmIntent);
 
-
+                //as unique pendingIntent id for each task
                 int id = Integer.parseInt(Long.toString(task.getId()));
+
                 PendingIntent pendingIntent = PendingIntent.getBroadcast(
                         MainActivity.this, id, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -359,16 +371,21 @@ public class MainActivity extends AppCompatActivity {
                     long repeatingTime15min=15*60*1000;
                     long oneHour = 60*60*1000;
 
+                    //notify 1hr before deadline
                     alarmManager.set(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime)-oneHour, pendingIntent);
+                    //notify half an hour before deadline
                     alarmManager.set(AlarmManager.RTC_WAKEUP, Long.parseLong(alarmTime)-(oneHour/2), pendingIntent);
+                    //notify every 15minutes after deadline
                     alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,Long.parseLong(alarmTime),repeatingTime15min, pendingIntent);
                 }
+                //store pendingIntent into array
                 intentArray.add(pendingIntent);
             }
+            //delete pendingIntent for reminder off tasks
             else if(task.getReminder() == 0){
                 int id = Integer.parseInt(Long.toString(task.getId()));
 
-                Intent alarmIntent = new Intent(getApplicationContext(), AlarmReceiver.class);
+                Intent alarmIntent = new Intent(context, AlarmReceiver.class);
                 Bundle bundle = new Bundle();
                 bundle.putSerializable("task", task);
                 alarmIntent.putExtras(bundle);
@@ -383,9 +400,8 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    //update dbs after edit a task
     public void updateDatabase(Task task, Context context){
-        Toast.makeText(context, "Marked Done!", Toast.LENGTH_LONG).show();
-
         mDbHelper = new TaskDbHelper(context);
         SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
